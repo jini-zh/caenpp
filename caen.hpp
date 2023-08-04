@@ -34,6 +34,10 @@ class Device {
     Device(CAENComm_ConnectionType link_type, const char* ip);
     Device(CAENComm_ConnectionType link_type, const std::string& ip);
 
+    Device(Device&& device): handle(device.handle) {
+      device.handle = -1;
+    };
+
     virtual ~Device();
 
     uint16_t read16(uint32_t address) const;
