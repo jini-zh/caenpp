@@ -75,7 +75,7 @@ class Digitizer {
 
     // read or write bits from start to end (inclusive)
     uint32_t readRegister(uint32_t address, uint8_t start, uint8_t end) const;
-    uint32_t writeRegister(
+    void writeRegister(
         uint32_t address, uint32_t data, uint8_t start, uint8_t end
     );
 

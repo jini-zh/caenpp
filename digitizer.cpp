@@ -245,12 +245,12 @@ uint32_t Digitizer::readRegister(uint32_t address, uint8_t start, uint8_t end) c
   return readRegister(address) & ((1 << end + 1) - 1) >> start;
 };
 
-uint32_t Digitizer::writeRegister(
+void Digitizer::writeRegister(
     uint32_t address, uint32_t data, uint8_t start, uint8_t end
 ) {
   uint32_t value = readRegister(address);
   uint32_t mask  = ~((1 << end + 1) - 1) | ((1 << start) - 1);
-  return value & mask | data << start & ~mask;
+  writeRegister(address, value & mask | data << start & ~mask);
 };
 
 void Digitizer::reset() {
