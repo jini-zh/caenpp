@@ -209,9 +209,9 @@ Digitizer::Digitizer(Digitizer&& digitizer):
 };
 
 Digitizer::Digitizer(
-    CAEN_DGTZ_ConnectionType link, uint32_t arg, int conet, uint32_t value
+    CAEN_DGTZ_ConnectionType link, uint32_t arg, int conet, uint32_t vme
 ) {
-  DGTZ(OpenDigitizer2, link, &arg, conet, value, &digitizer);
+  DGTZ(OpenDigitizer2, link, &arg, conet, vme, &digitizer);
   try {
     DGTZ(GetInfo, digitizer, &info_);
   } catch (...) {
