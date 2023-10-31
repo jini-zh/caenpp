@@ -29,4 +29,4 @@ uninstall:
 	-rmdir -vp --ignore-fail-on-non-empty $(includedir)/caen++
 
 clean:
-	rm -v config.mak digitizer.o libcaen++.so 2> /dev/null; true
+	rm -v config.mak {digitizer,caen,v6534}.o libcaen++.so 2> /dev/null; true
