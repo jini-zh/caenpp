@@ -154,7 +154,7 @@ class V6534: public comm::Device {
     uint16_t trip_time(uint8_t channel) const {
       return read_channel(channel, 0x98);
     };
-    uint16_t set_trip_time(uint8_t channel, uint16_t value) {
+    void set_trip_time(uint8_t channel, uint16_t value) {
       write_channel(channel, 0x98, std::min<uint16_t>(value, 10000));
     };
 
