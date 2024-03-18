@@ -108,7 +108,7 @@ Device::Device(CAENComm_ConnectionType link_type, const std::string& ip) {
 }
 
 Device::~Device() {
-  if (handle >= 0) COMM(CloseDevice, handle);
+  if (handle >= 0) CAENComm_CloseDevice(handle);
 }
 
 void Device::write32(uint32_t address, uint32_t data) {
