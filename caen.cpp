@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include <cstring>
 
 #include "caen.hpp"
@@ -41,6 +43,33 @@ static const char* comm_strerror(CAENComm_ErrorCode code) {
   };
 };
 
+static const char* comm_connection_type(CAENComm_ConnectionType type) {
+  switch (type) {
+    case CAENComm_USB:
+      return "USB";
+    case CAENComm_OpticalLink:
+      return "optical link";
+    case CAENComm_USB_A4818_V2718:
+      return "USB A4818 - V2718";
+    case CAENComm_USB_A4818_V3718:
+      return "USB A4818 - V3718";
+    case CAENComm_USB_A4818_V4718:
+      return "USB A4818 - V4718";
+    case CAENComm_USB_A4818:
+      return "USB A4818";
+    case CAENComm_ETH_V4718:
+      return "ETH V4718";
+    case CAENComm_USB_V4718:
+      return "USB V4718";
+    default:
+      return "unknown";
+  };
+};
+
+static bool is_ethernet(CAENComm_ConnectionType type) {
+  return type == CAENComm_ETH_V4718;
+};
+
 Device::Error::~Error() throw() {
   if (message) delete[] message;
 }
@@ -80,6 +109,23 @@ const char* Device::Error::what() const throw() {
   return message;
 };
 #endif
+
+const char* Device::WrongDevice::what() const noexcept {
+  if (message.empty()) {
+    std::stringstream ss;
+    ss << "Device connected through " << comm_connection_type(link_type_);
+    if (is_ethernet(link_type_))
+      ss << ", IP address " << ip_;
+    else {
+      if (arg_)   ss << ", arg " << arg_;
+      if (conet_) ss << ", conet node " << conet_;
+      if (vme_)   ss << ", VME address " << vme_;
+    };
+    ss << " is not a " << expected_;
+    message = ss.str();
+  };
+  return message.c_str();
+};
 
 #define COMM(function, ...) \
   do { \
