@@ -8,23 +8,21 @@ namespace caen {
 
 class Error: public std::exception {};
 
-namespace comm {
-
-class Error: public caen::Error {
-  public:
-    Error(CAENComm_ErrorCode code): code_(code) {};
-    ~Error() throw();
-
-    const char* what() const throw();
-    CAENComm_ErrorCode code() const { return code_; };
-
-  private:
-    CAENComm_ErrorCode code_;
-    mutable char* message = nullptr;
-};
-
 class Device {
   public:
+    class Error: public caen::Error {
+      public:
+        Error(CAENComm_ErrorCode code): code_(code) {};
+        ~Error() throw();
+
+        const char* what() const throw();
+        CAENComm_ErrorCode code() const { return code_; };
+
+      private:
+        CAENComm_ErrorCode code_;
+        mutable char* message = nullptr;
+    };
+
     Device(
         CAENComm_ConnectionType link_type,
         uint32_t arg,
@@ -48,7 +46,5 @@ class Device {
   protected:
     int handle;
 };
-
-} // namespace comm
 
 } // namespace caen

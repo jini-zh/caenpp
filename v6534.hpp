@@ -8,7 +8,7 @@
 
 namespace caen {
 
-class V6534: public comm::Device {
+class V6534: public Device {
   public:
     class Error: public caen::Error {
       public:

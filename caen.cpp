@@ -4,8 +4,6 @@
 
 namespace caen {
 
-namespace comm {
-
 static const char* comm_strerror(CAENComm_ErrorCode code) {
   switch (code) {
     case CAENComm_Success:
@@ -43,14 +41,14 @@ static const char* comm_strerror(CAENComm_ErrorCode code) {
   };
 };
 
-Error::~Error() throw() {
+Device::Error::~Error() throw() {
   if (message) delete[] message;
 }
 
 // CAENComm_DecodeError does not recognize errors CommTimeout, DeviceNotFound,
 // UnusedBridge, Terminated, UnsupportedBaseAddress
 #if 0
-const char* Error::what() const throw() {
+const char* Device::Error::what() const throw() {
   if (!message) {
     // CAEN documentation does not specify the maximum length of error string
     char buf[256];
@@ -69,7 +67,7 @@ const char* Error::what() const throw() {
   return message;
 }
 #else
-const char* Error::what() const throw() {
+const char* Device::Error::what() const throw() {
   static const char* const unknown = comm_strerror(static_cast<CAENComm_ErrorCode>(1));
   if (message) return message;
   const char* msg = comm_strerror(code_);
@@ -130,7 +128,5 @@ uint16_t Device::read16(uint32_t address) const {
   COMM(Read16, handle, address, &result);
   return result;
 }
-
-} // namespace comm
 
 } // namespace caen

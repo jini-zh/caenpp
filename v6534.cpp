@@ -5,7 +5,7 @@
 namespace caen {
 
 V6534::V6534(uint32_t vme, uint32_t usb):
-  comm::Device(CAENComm_USB, usb, 0, vme << 16)
+  Device(CAENComm_USB, usb, 0, vme << 16)
 {
   std::string model = this->model();
   if (strncmp(model.c_str(), "V6534", 5) != 0)
