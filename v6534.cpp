@@ -4,12 +4,10 @@
 
 namespace caen {
 
-V6534::V6534(uint32_t vme, uint32_t usb):
-  Device(CAENComm_USB, usb, 0, vme << 16)
-{
+V6534::V6534(const Connection& connection): Device(connection) {
   std::string model = this->model();
   if (strncmp(model.c_str(), "V6534", 5) != 0)
-    throw WrongDevice("V6534", CAENComm_USB, usb, 0, vme << 16);
+    throw WrongDevice(connection, "V6534");
 };
 
 uint16_t V6534::read_channel(uint8_t channel, uint8_t offset) const {

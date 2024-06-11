@@ -22,7 +22,7 @@ class V6534: public Device {
         std::string message;
     };
 
-    V6534(uint32_t vme, uint32_t usb = 0);
+    V6534(const Connection& connection);
 
     // Board maximum allowed voltage, V
     uint16_t vmax() const { return read16(0x0050); };

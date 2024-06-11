@@ -10,6 +10,16 @@ class Error: public std::exception {};
 
 class Device {
   public:
+    struct Connection {
+      CAENComm_ConnectionType type;
+      uint32_t                arg;
+      uint32_t                conet;
+      uint32_t                vme;
+      std::string             ip;
+
+      bool is_ethernet() const;
+    };
+
     // CAEN device errors (with the error code)
     class Error: public caen::Error {
       public:
@@ -27,55 +37,24 @@ class Device {
     // Connected to a wrong device --- identification data does not match
     class WrongDevice: public caen::Error {
       public:
-        WrongDevice(
-            std::string expected,
-            CAENComm_ConnectionType link_type,
-            uint32_t arg,
-            uint32_t conet = 0,
-            uint32_t vme   = 0
-        ): expected_(std::move(expected)),
-           link_type_(link_type),
-           arg_(arg),
-           conet_(conet),
-           vme_(vme)
+        WrongDevice(Connection connection, std::string expected):
+          connection_(std::move(connection)),
+          expected_(std::move(expected))
         {};
 
-        WrongDevice(
-            std::string expected,
-            CAENComm_ConnectionType link_type,
-            std::string ip
-        ): expected_(std::move(expected)),
-           link_type_(link_type),
-           ip_(std::move(ip))
-        {};
+        const std::string& expected()   const { return expected_;   };
+        const Connection&  connection() const { return connection_; };
 
         const char* what() const noexcept;
 
-        const std::string&      expected()  const { return expected_;  };
-        CAENComm_ConnectionType link_type() const { return link_type_; };
-        uint32_t                arg()       const { return arg_;       };
-        uint32_t                conet()     const { return conet_;     };
-        uint32_t                vme()       const { return vme_;       };
-        const std::string&      ip()        const { return ip_;        };
-
       private:
-        std::string             expected_;
-        CAENComm_ConnectionType link_type_;
-        uint32_t                arg_;
-        uint32_t                conet_;
-        uint32_t                vme_;
-        std::string             ip_;
-        mutable std::string     message;
+        Connection  connection_;
+        std::string expected_;
+
+        mutable std::string message;
     };
 
-    Device(
-        CAENComm_ConnectionType link_type,
-        uint32_t arg,
-        uint32_t conet = 0,
-        uint32_t vme   = 0
-    );
-    Device(CAENComm_ConnectionType link_type, const char* ip);
-    Device(CAENComm_ConnectionType link_type, const std::string& ip);
+    Device(const Connection& connection);
 
     Device(Device&& device): handle(device.handle) {
       device.handle = -1;

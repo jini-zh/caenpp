@@ -43,7 +43,7 @@ static const char* comm_strerror(CAENComm_ErrorCode code) {
   };
 };
 
-static const char* comm_connection_type(CAENComm_ConnectionType type) {
+static const char* comm_str_connection_type(CAENComm_ConnectionType type) {
   switch (type) {
     case CAENComm_USB:
       return "USB";
@@ -66,7 +66,7 @@ static const char* comm_connection_type(CAENComm_ConnectionType type) {
   };
 };
 
-static bool is_ethernet(CAENComm_ConnectionType type) {
+bool Device::Connection::is_ethernet() const {
   return type == CAENComm_ETH_V4718;
 };
 
@@ -113,13 +113,15 @@ const char* Device::Error::what() const throw() {
 const char* Device::WrongDevice::what() const noexcept {
   if (message.empty()) {
     std::stringstream ss;
-    ss << "Device connected through " << comm_connection_type(link_type_);
-    if (is_ethernet(link_type_))
-      ss << ", IP address " << ip_;
+    ss
+      << "Device connected through "
+      << comm_str_connection_type(connection_.type);
+    if (connection_.is_ethernet())
+      ss << ", IP address " << connection_.ip;
     else {
-      if (arg_)   ss << ", arg " << arg_;
-      if (conet_) ss << ", conet node " << conet_;
-      if (vme_)   ss << ", VME address " << vme_;
+      if (connection_.arg)   ss << ", arg "         << connection_.arg;
+      if (connection_.conet) ss << ", conet node "  << connection_.conet;
+      if (connection_.vme)   ss << ", VME address " << connection_.vme;
     };
     ss << " is not a " << expected_;
     message = ss.str();
@@ -134,22 +136,19 @@ const char* Device::WrongDevice::what() const noexcept {
       throw Error(status); \
   } while (false)
 
-Device::Device(
-    CAENComm_ConnectionType link_type,
-    uint32_t arg,
-    uint32_t conet,
-    uint32_t vme
-) {
-  COMM(OpenDevice2, link_type, &arg, conet, vme, &handle);
-}
-
-Device::Device(CAENComm_ConnectionType link_type, const char* ip) {
-  COMM(OpenDevice2, link_type, ip, 0, 0, &handle);
-}
-
-Device::Device(CAENComm_ConnectionType link_type, const std::string& ip) {
-  COMM(OpenDevice2, link_type, ip.c_str(), 0, 0, &handle);
-}
+Device::Device(const Connection& connection) {
+  if (connection.is_ethernet())
+    COMM(OpenDevice2, connection.type, connection.ip.c_str(), 0, 0, &handle);
+  else
+    COMM(
+        OpenDevice2,
+        connection.type,
+        &connection.arg,
+        connection.conet,
+        connection.vme,
+        &handle
+    );
+};
 
 Device::~Device() {
   if (handle >= 0) CAENComm_CloseDevice(handle);
