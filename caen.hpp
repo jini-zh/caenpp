@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <stdexcept>
 
 #include <CAENComm.h>
@@ -60,6 +61,120 @@ class BitField {
       value_type mask = ~(~static_cast<value_type>(1) << end - start) << start;
       value_ = value_ & ~mask | bits << start & mask;
     };
+};
+
+// A fixed size array with a fill pointer that specifies how many items are
+// stored in the buffer. Provides std::array API.
+template <typename Item, unsigned Size>
+class Buffer {
+  private:
+    using array = std::array<Item, Size>;
+
+  public:
+    Buffer();
+
+    Item& at(size_t index) {
+      if (index >= fill_)
+        throw std::out_of_range("caen::Buffer: at: out of range");
+      return data_[index];
+    };
+
+    const Item& at(size_t index) const {
+      if (index >= fill_)
+        throw std::out_of_range("caen::Buffer: at: out of range");
+      return data_[index];
+    };
+
+    Item& operator[](size_t index) {
+      return data_[index];
+    };
+
+    const Item& operator[](size_t index) const {
+      return data_[index];
+    };
+
+    Item& front() {
+      return data_.front();
+    };
+
+    const Item& front() const {
+      return data_.front();
+    };
+
+    Item& back() {
+      return data_[fill_ - 1];
+    };
+
+    const Item& back() const {
+      return data_[fill_ - 1];
+    };
+
+    Item* data() noexcept { return data_.data(); };
+    const Item* data() const noexcept { return data_.data(); };
+
+    typename array::iterator begin() noexcept {
+      return data_.begin();
+    };
+
+    typename array::const_iterator cbegin() const noexcept {
+      return data_.cbegin();
+    };
+
+    typename array::iterator end() noexcept {
+      return data_.begin() + fill_;
+    };
+
+    typename array::const_iterator cend() const noexcept {
+      return data_.cbegin() + fill_;
+    };
+
+    typename array::reverse_iterator rbegin() noexcept {
+      return data_.rend() - fill_;
+    };
+
+    typename array::const_reverse_iterator crbegin() const noexcept {
+      return data_.crend() - fill_;
+    };
+
+    typename array::reverse_iterator rend() noexcept {
+      return data_.rend();
+    };
+
+    typename array::const_reverse_iterator crend() const noexcept {
+      return data_.crend();
+    };
+
+    bool empty() const noexcept {
+      return fill_ == 0;
+    };
+
+    size_t size() const noexcept {
+      return fill_;
+    };
+
+    // adjust the fill pointer
+    void resize(size_t size) {
+      if (size >= Size)
+        throw std::out_of_range("caen::Buffer: resize: out of range");
+      fill_ = size;
+    };
+
+    constexpr size_t max_size() const noexcept {
+      return data_.size();
+    };
+
+    void fill(const Item& item) {
+      data_.fill(item);
+    };
+
+    void swap(Buffer& buffer) {
+      data_.swap(buffer.data_);
+      std::swap(fill_, buffer.fill_);
+    };
+
+  protected:
+    array  data_;
+    size_t fill_;
 };
 
 class Device {

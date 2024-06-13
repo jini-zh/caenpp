@@ -1,7 +1,5 @@
 #pragma once
 
-#include <array>
-
 #include "caen.hpp"
 
 namespace caen {
@@ -314,42 +312,8 @@ class V1290: public Device {
         uint8_t type() const { return bits(27, 31); };
     };
 
-    // A fixed size array of packets (std::array<Packet>) with a fill pointer
-    // that specifies how many packets are stored in the buffer. Provides
-    // std::array API.
-    class Buffer {
+    class Buffer: public caen::Buffer<Packet, 32 * 1024> {
       public:
-        // Buffer size in uint32_t words. Tokens `size` and `max_size` are
-        // reserved by the std::array API.
-        static const uint16_t nwords = 32 * 1024;
-
-      private:
-        using array = std::array<Packet, nwords>;
-
-      public:
-        Buffer();
-
-        Packet at(uint16_t index) const {
-          if (index >= fill_)
-            throw std::out_of_range("V1290::Buffer: out of range");
-          return data_[index];
-        };
-        
-        Packet operator[](uint16_t index) const {
-          return data_[index];
-        };
-
-        Packet front() const {
-          return data_.front();
-        };
-
-        Packet back() const {
-          return data_[fill_ - 1];
-        };
-
-        Packet* data() noexcept { return data_.data(); };
-        const Packet* data() const noexcept { return data_.data(); };
-
         // Use this function to avoid tiresome casting. Packet is just a
         // uint32_t under the hood.
         uint32_t* raw() noexcept {
@@ -359,65 +323,6 @@ class V1290: public Device {
         const uint32_t* raw() const noexcept {
           return reinterpret_cast<const uint32_t*>(data());
         };
-
-        array::iterator begin() noexcept {
-          return data_.begin();
-        };
-
-        array::const_iterator cbegin() const noexcept {
-          return data_.cbegin();
-        };
-
-        array::iterator end() noexcept {
-          return data_.begin() + fill_;
-        };
-
-        array::const_iterator cend() const noexcept {
-          return data_.cbegin() + fill_;
-        };
-
-        array::reverse_iterator rbegin() noexcept {
-          return data_.rend() - fill_;
-        };
-
-        array::const_reverse_iterator crbegin() const noexcept {
-          return data_.crend() - fill_;
-        };
-
-        array::reverse_iterator rend() noexcept {
-          return data_.rend();
-        };
-
-        array::const_reverse_iterator crend() const noexcept {
-          return data_.crend();
-        };
-
-        bool empty() const noexcept {
-          return fill_ == 0;
-        };
-
-        uint16_t size() const noexcept {
-          return fill_;
-        };
-
-        constexpr uint16_t max_size() const noexcept {
-          return data_.size();
-        };
-
-        void fill(Packet packet) {
-          data_.fill(packet);
-        };
-
-        void swap(Buffer& buffer) {
-          data_.swap(buffer.data_);
-          std::swap(fill_, buffer.fill_);
-        };
-
-      private:
-        array    data_;
-        uint16_t fill_;
-
-        friend class V1290;
     };
 
     // TDC time resolution in single mode (only the leading or the trailing
@@ -1012,7 +917,7 @@ class V1290: public Device {
     };
 
     void readout(Buffer& buffer) {
-      buffer.fill_ = readout(buffer.raw(), buffer.max_size());
+      buffer.resize(readout(buffer.raw(), buffer.max_size()));
     };
 
   private:
