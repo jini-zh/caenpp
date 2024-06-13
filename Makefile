@@ -10,14 +10,12 @@ includedir := $(DESTDIR)$(includedir)
 
 .PHONY: install uninstall clean
 
-libcaen++.so: digitizer.o caen.o v6534.o
+objects = caen digitizer v1290 v6534
+
+libcaen++.so: $(objects:=.o)
 	$(CXX) -o $@ $^ $(LDFLAGS) -shared
 
-digitizer.o: digitizer.cpp digitizer.hpp caen.hpp
-caen.o: caen.cpp caen.hpp
-v6534.o: v6534.cpp v6534.hpp caen.hpp
-
-%.o: %.cpp
+%.o: %.cpp %.hpp caen.hpp
 	$(CXX) -c $< -std=c++11 $(CXXFLAGS) -fPIC
 
 install:
@@ -33,4 +31,4 @@ uninstall:
 	-rmdir -vp --ignore-fail-on-non-empty $(includedir)/caen++
 
 clean:
-	rm -v config.mak {digitizer,caen,v6534}.o libcaen++.so 2> /dev/null; true
+	rm -f config.mak $(objects:=.o) libcaen++.so

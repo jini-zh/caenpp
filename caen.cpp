@@ -174,4 +174,36 @@ uint16_t Device::read16(uint32_t address) const {
   return result;
 }
 
+template <> uint16_t Device::read<16>(uint32_t address) const {
+  return read16(address);
+};
+
+template <> uint32_t Device::read<32>(uint32_t address) const {
+  return read32(address);
+};
+
+template <> void Device::write<16>(uint32_t address, uint16_t data) {
+  write16(address, data);
+};
+
+template <> void Device::write<32>(uint32_t address, uint32_t data) {
+  write32(address, data);
+};
+
+uint32_t Device::blt_read(
+    uint32_t address, uint32_t* buffer, unsigned size
+) const {
+  int nwords;
+  COMM(BLTRead, handle, address, buffer, size, &nwords);
+  return nwords;
+};
+
+uint32_t Device::mblt_read(
+    uint32_t address, uint32_t* buffer, unsigned size
+) const {
+  int nwords;
+  COMM(MBLTRead, handle, address, buffer, size, &nwords);
+  return nwords;
+};
+
 } // namespace caen
