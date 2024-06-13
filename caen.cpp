@@ -206,4 +206,13 @@ uint32_t Device::mblt_read(
   return nwords;
 };
 
+uint32_t Device::read(uint32_t address, unsigned nwords, uint32_t step) const {
+  uint32_t result = 0;
+  while (nwords--) {
+    result = result << 8 | read16(address) & 0xFF;
+    address += step;
+  };
+  return result;
+};
+
 } // namespace caen

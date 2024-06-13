@@ -1018,14 +1018,6 @@ class V1290: public Device {
   private:
     Version version_;
 
-    // Read a number stored in big endian notation in lower 8 bits of `nwords`
-    // sequential 16 bits registers separated by 4 bytes in the address space
-    uint32_t read(
-        uint32_t address,
-        unsigned nwords /* must be 4 or less */,
-        uint32_t step
-    ) const;
-
     uint16_t micro_read() const {
       return read16(0x102E);
     };

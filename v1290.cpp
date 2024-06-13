@@ -44,15 +44,6 @@ V1290::V1290(V1290&& device): Device(std::move(device)) {
   version_ = device.version_;
 };
 
-uint32_t V1290::read(uint32_t address, unsigned nwords, uint32_t step) const {
-  uint32_t result = 0;
-  while (nwords--) {
-    result = result << 8 | read16(address) & 0xFF;
-    address += step;
-  };
-  return result;
-};
-
 V1290::Resolution V1290::resolution() const {
   auto mode = edge_detection();
   micro_write(0x2600);
