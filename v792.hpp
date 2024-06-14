@@ -138,7 +138,7 @@ class V792: public Device {
 
         uint8_t count() const { return bits( 8, 13); };
         uint8_t crate() const { return bits(16, 23); };
-        uint8_t type()  const { return bits(25, 26); };
+        uint8_t type()  const { return bits(24, 26); };
         uint8_t geo()   const { return bits(27, 31); };
     };
 
