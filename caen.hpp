@@ -186,6 +186,8 @@ class Device {
       uint32_t                vme;
       std::string             ip;
 
+      Connection(): type(CAENComm_USB), arg(0), conet(0), vme(0) {};
+
       bool is_ethernet() const;
     };
 
