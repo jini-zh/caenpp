@@ -123,7 +123,9 @@ class V792: public Device {
           Invalid    = 0b110
         };
 
-        Packet(uint32_t value): BitField<32>(value) {};
+        static const uint32_t invalid = 0x60000;
+
+        Packet(uint32_t value = invalid): BitField<32>(value) {};
 
         uint8_t type() const { return bits(24, 26); };
         template <typename P> P as() const {

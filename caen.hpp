@@ -37,7 +37,7 @@ class BitField {
   public:
     using value_type = UInt<NBits>;
 
-    BitField(value_type value): value_(value) {};
+    BitField(value_type value = 0): value_(value) {};
 
     operator value_type() { return value_; };
 
@@ -71,7 +71,7 @@ class Buffer {
     using array = std::array<Item, Size>;
 
   public:
-    Buffer();
+    Buffer() {};
 
     Item& at(size_t index) {
       if (index >= fill_)

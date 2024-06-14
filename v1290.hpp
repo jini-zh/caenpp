@@ -227,7 +227,9 @@ class V1290: public Device {
           Filler         = 0b11000
         };
 
-        Packet(uint32_t value): BitField<32>(value) {};
+        static const uint32_t filler = 0xC0000000U;
+
+        Packet(uint32_t value = filler): BitField<32>(value) {};
 
         uint8_t type() const { return bits(27, 31); };
 
