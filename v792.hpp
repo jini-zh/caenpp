@@ -513,8 +513,17 @@ class V792: public Device {
       return read(0x8F02, 2, 4);
     };
 
-    uint32_t readout(uint32_t* buffer, uint32_t size);
-    void readout(Buffer&);
+    uint32_t readout(uint32_t* buffer, uint32_t size) {
+      return blt_read(0, buffer, size);
+    };
+
+    uint32_t readout(Packet* buffer, uint32_t size) {
+      return readout(reinterpret_cast<uint32_t*>(buffer), size);
+    };
+
+    void readout(Buffer& buffer) {
+      buffer.resize(readout(buffer.raw(), buffer.max_size()));
+    };
 
   private:
     uint8_t channel_step_;

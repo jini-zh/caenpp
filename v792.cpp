@@ -43,12 +43,4 @@ void V792::test_event_write(TestEvent events[32]) {
   test_event_write(reinterpret_cast<uint16_t*>(events));
 };
 
-uint32_t V792::readout(uint32_t* buffer, uint32_t size) {
-  return blt_read(0, buffer, size);
-};
-
-void V792::readout(Buffer& buffer) {
-  buffer.resize(readout(buffer.raw(), buffer.max_size()));
-};
-
 };

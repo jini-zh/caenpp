@@ -916,6 +916,10 @@ class V1290: public Device {
       return blt_read(0, buffer, size);
     };
 
+    uint32_t readout(Packet* buffer, uint16_t size) {
+      return readout(reinterpret_cast<uint32_t*>(buffer), size);
+    };
+
     void readout(Buffer& buffer) {
       buffer.resize(readout(buffer.raw(), buffer.max_size()));
     };
