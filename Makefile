@@ -10,7 +10,7 @@ includedir := $(DESTDIR)$(includedir)
 
 .PHONY: install uninstall clean
 
-objects = caen digitizer v792 v1290 v6534
+objects = caen digitizer v792 v812 v1290 v6534
 
 libcaen++.so: $(objects:=.o)
 	$(CXX) -o $@ $^ $(LDFLAGS) -shared
