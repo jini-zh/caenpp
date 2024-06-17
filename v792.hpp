@@ -473,6 +473,15 @@ class V792: public Device {
       write16(0x1080 + channel * channel_step_, settings);
     };
 
+    void set_channel_settings(
+        uint8_t channel, uint8_t threshold, bool enabled
+    ) {
+      write16(
+          0x1080 + channel * channel_step_,
+          threshold & 0x7F | enabled << 7
+      );
+    };
+
     uint8_t channel_threshold(uint8_t channel) const {
       return channel_settings(channel).threshold();
     };
