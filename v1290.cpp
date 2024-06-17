@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <cmath>
+
 #include "v1290.hpp"
 
 namespace caen {
@@ -46,30 +49,54 @@ V1290::V1290(V1290&& device): Device(std::move(device)) {
 
 V1290::Resolution V1290::resolution() const {
   auto mode = edge_detection();
+
   micro_write(0x2600);
   uint16_t res = micro_read();
+
   Resolution result;
   if (mode & 3 == 3) {
-    result.edge  = res & 7; 
-    result.pulse = res >> 3 & 0xF;
+    result.edge  = pair_resolution[res & 7];
+    result.pulse = pair_resolution[res >> 3 & 0xF];
   } else {
-    result.edge  = res & 3;
-    result.pulse = -1;
+    result.edge  = single_resolution[res & 3];
+    result.pulse = 0;
   };
   return result;
 };
 
-void V1290::set_resolution(int8_t edge, int8_t pulse) {
-  if (pulse < 0) {
-    // single mode
-    micro_write(0x2400);
-    micro_write(edge & 3);
-    return;
-  };
+static uint8_t find_nearest(
+    const float* array, uint8_t size, float value, bool ascending = true
+) {
+  int i = (
+      ascending
+      ? std::upper_bound(array, array + size, value)
+      : std::upper_bound(array, array + size, value, std::greater<float>())
+  ) - array;
+  if (i == 0) return 0;
+  if (i == size) return i - 1;
+  if (std::fabs(value - array[i-1]) < std::fabs(value - array[i])) return i - 1;
+  return i;
+};
 
-  // pair mode
-  micro_write(0x2500);
-  micro_write((pulse & 0xF) << 8 | edge & 3);
+void V1290::set_resolution(float edge, float pulse) {
+  auto mode = edge_detection();
+
+  if (mode & 3 == 3) {
+    uint8_t iedge  = find_nearest(pair_resolution, 14, edge);
+    uint8_t ipulse = find_nearest(pair_resolution, 14, pulse);
+    micro_write(0x2500);
+    micro_write(ipulse << 8 | iedge);
+  } else {
+    uint8_t iedge = find_nearest(single_resolution, 4, edge, false);
+    micro_write(0x2400);
+    micro_write(iedge);
+  };
+};
+
+void V1290::set_dead_time(float time) {
+  uint8_t t = find_nearest(dead_times, 4, time);
+  micro_write(0x2800);
+  micro_write(t);
 };
 
 V1290::TriggerConfiguration V1290::trigger_configuration() const {

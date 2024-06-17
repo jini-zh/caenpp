@@ -152,8 +152,8 @@ class V1290: public Device {
     };
 
     struct Resolution {
-      int8_t edge;  // index to `single_resolution` or `pair_resolution`
-      int8_t pulse; // index to `pair resolution` or -1
+      float edge;
+      float pulse;
     };
 
     // TDC internal error types. See opcode 39xx.
@@ -709,20 +709,17 @@ class V1290: public Device {
     };
 
     Resolution resolution() const;
-    void set_resolution(int8_t edge, int8_t pulse = -1);
+    void set_resolution(float edge, float pulse = 0);
     void set_resolution(Resolution r) {
       set_resolution(r.edge, r.pulse);
     };
 
-    uint8_t dead_time() const {
+    float dead_time() const {
       micro_write(0x2900);
-      return micro_read();
+      return dead_times[micro_read() & 3];
     };
 
-    void set_dead_time(uint8_t index) {
-      micro_write(0x2800);
-      micro_write(index & 3);
-    };
+    void set_dead_time(float time);
 
     // Whether TDC's header and trailer packets are added to the data
     bool header_and_trailer_enabled() const {
