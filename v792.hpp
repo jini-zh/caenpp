@@ -429,7 +429,7 @@ class V792: public Device {
     };
 
     // XXX: pedestal step is not defined
-    uint8_t current_pedestal() {
+    uint8_t current_pedestal() const {
       return read16(0x1060);
     };
 
