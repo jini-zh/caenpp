@@ -79,7 +79,7 @@ class V792: public Device {
         defbit(slide_enabled,               7);
         defbit(shift_threshold,             8);
         defbit(auto_increment,             11);
-        defbit(empty_enable,               12);
+        defbit(empty_enabled,              12);
         defbit(slide_subtraction_disabled, 13);
         defbit(all_triggers,               14);
 #undef defbit
@@ -401,7 +401,7 @@ class V792: public Device {
     defbit(slide_enabled,               7);
     defbit(shift_threshold,             8);
     defbit(auto_increment,             11);
-    defbit(empty_enable,               12);
+    defbit(empty_enabled,              12);
     defbit(slide_subtraction_disabled, 13);
     defbit(all_triggers,               14);
 #undef defbit
