@@ -686,7 +686,7 @@ class V1290: public Device {
       set_time_value(0x1200, seconds);
     };
 
-    void set_refection_margin(float seconds) {
+    void set_reject_margin(float seconds) {
       set_time_value(0x1300, seconds);
     };
 
