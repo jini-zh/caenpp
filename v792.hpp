@@ -67,21 +67,21 @@ class V792: public Device {
         BitSet2(): BitField<16>(0) {};
         BitSet2(uint16_t value): BitField<16>(value & mask) {};
 
-#define defbit(name, index) \
-        bool name() const { return bit(index); }; \
-        void set_ ## name(bool value) { set_bit(index, value); }
-        defbit(test_memory,                 0);
-        defbit(offline,                     1);
-        defbit(clear_data,                  2);
-        defbit(overflow_enabled,            3);
-        defbit(threshold_enabled,           4);
-        defbit(test_acquisition,            6);
-        defbit(slide_enabled,               7);
-        defbit(shift_threshold,             8);
-        defbit(auto_increment,             11);
-        defbit(empty_enabled,              12);
-        defbit(slide_subtraction_disabled, 13);
-        defbit(all_triggers,               14);
+#define defbit(name, n, index) \
+        bool name() const { return bit(n index); }; \
+        void set_ ## name(bool value) { set_bit(index, n value); }
+        defbit(test_memory,,                 0);
+        defbit(offline,,                     1);
+        defbit(clear_data,,                  2);
+        defbit(overflow_enabled,,            3);
+        defbit(threshold_enabled,!,          4);
+        defbit(test_acquisition,,            6);
+        defbit(slide_enabled,,               7);
+        defbit(shift_threshold,,             8);
+        defbit(auto_increment,,             11);
+        defbit(empty_enabled,,              12);
+        defbit(slide_subtraction_enabled,!, 13);
+        defbit(all_triggers,,               14);
 #undef defbit
 
         void set(bool value) {
@@ -385,25 +385,25 @@ class V792: public Device {
     // Bit Clear 2 registers. Each call to a getter reads a register; each call
     // to a setter both reads and writes to a register. For a more efficient
     // approach use the `bitset2`, `set_bitset2` and `clear_bitset2` functions.
-#define defbit(name, index) \
+#define defbit(name) \
     bool name() const { return bitset2().name(); }; \
     void set_ ## name(bool value) { \
       BitSet2 b; \
       b.set_ ## name(true); \
       write16(value ? 0x1032 : 0x1034, b); \
     }
-    defbit(test_memory,                 0);
-    defbit(offline,                     1);
-    defbit(clear_data,                  2);
-    defbit(overflow_enabled,            3);
-    defbit(threshold_enabled,           4);
-    defbit(test_acquisition,            6);
-    defbit(slide_enabled,               7);
-    defbit(shift_threshold,             8);
-    defbit(auto_increment,             11);
-    defbit(empty_enabled,              12);
-    defbit(slide_subtraction_disabled, 13);
-    defbit(all_triggers,               14);
+    defbit(test_memory);
+    defbit(offline);
+    defbit(clear_data);
+    defbit(overflow_enabled);
+    defbit(threshold_enabled);
+    defbit(test_acquisition);
+    defbit(slide_enabled);
+    defbit(shift_threshold);
+    defbit(auto_increment);
+    defbit(empty_enabled);
+    defbit(slide_subtraction_enabled);
+    defbit(all_triggers);
 #undef defbit
 
     void clear() {
