@@ -945,7 +945,7 @@ class V1290: public Device {
     };
 
     int16_t seconds_to_cycles(float seconds) const {
-      return seconds / 25e-9;
+      return seconds / 25e-9 + 0.5;
     };
 
     void set_time_value(uint16_t opcode, float seconds) {
