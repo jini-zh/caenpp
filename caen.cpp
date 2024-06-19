@@ -43,8 +43,8 @@ static const char* comm_strerror(CAENComm_ErrorCode code) {
   };
 };
 
-static const char* comm_str_connection_type(CAENComm_ConnectionType type) {
-  switch (type) {
+static const char* comm_str_connection_link(CAENComm_ConnectionType link) {
+  switch (link) {
     case CAENComm_USB:
       return "USB";
     case CAENComm_OpticalLink:
@@ -67,7 +67,7 @@ static const char* comm_str_connection_type(CAENComm_ConnectionType type) {
 };
 
 bool Device::Connection::is_ethernet() const {
-  return type == CAENComm_ETH_V4718;
+  return link == CAENComm_ETH_V4718;
 };
 
 Device::Error::~Error() throw() {
@@ -115,7 +115,7 @@ const char* Device::WrongDevice::what() const noexcept {
     std::stringstream ss;
     ss
       << "Device connected through "
-      << comm_str_connection_type(connection_.type);
+      << comm_str_connection_link(connection_.link);
     if (connection_.is_ethernet())
       ss << ", IP address " << connection_.ip;
     else {
@@ -138,11 +138,11 @@ const char* Device::WrongDevice::what() const noexcept {
 
 Device::Device(const Connection& connection) {
   if (connection.is_ethernet())
-    COMM(OpenDevice2, connection.type, connection.ip.c_str(), 0, 0, &handle);
+    COMM(OpenDevice2, connection.link, connection.ip.c_str(), 0, 0, &handle);
   else
     COMM(
         OpenDevice2,
-        connection.type,
+        connection.link,
         &connection.arg,
         connection.conet,
         connection.vme,

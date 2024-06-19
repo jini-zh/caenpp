@@ -180,7 +180,7 @@ class Buffer {
 class Device {
   public:
     struct Connection {
-      CAENComm_ConnectionType type;
+      CAENComm_ConnectionType link;
       uint32_t                arg;
       uint32_t                conet;
       uint32_t                vme;
