@@ -157,6 +157,12 @@ Device::~Device() {
   if (handle >= 0) CAENComm_CloseDevice(handle);
 }
 
+int Device::vme_handle() const {
+  int result;
+  COMM(Info, handle, CAENComm_VMELIB_handle, &result);
+  return result;
+};
+
 void Device::write32(uint32_t address, uint32_t data) {
   COMM(Write32, handle, address, data);
 }

@@ -231,6 +231,9 @@ class Device {
 
     virtual ~Device();
 
+    int comm_handle() const { return handle; };
+    int vme_handle()  const;
+
     // These templates are implemented in terms of the functions below. They
     // are intended for generic programming; use the functions if it's more
     // convenient.
