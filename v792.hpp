@@ -478,7 +478,7 @@ class V792: public Device {
     ) {
       write16(
           0x1080 + channel * channel_step_,
-          threshold & 0x7F | enabled << 7
+          threshold & 0x7F | !enabled << 8
       );
     };
 
