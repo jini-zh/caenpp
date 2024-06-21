@@ -20,7 +20,7 @@ libcaen++.so: $(objects:=.o)
 %.o: %.cpp %.hpp caen.hpp
 	$(CXX) -c $< -std=c++11 $(CXXFLAGS) -fPIC
 
-install:
+install: libcaen++.so
 	install -d $(libdir)
 	install -m 755 libcaen++.so $(libdir)/libcaen++.so.$(version)
 	ln -sf libcaen++.so.$(version) $(libdir)/libcaen++.so
