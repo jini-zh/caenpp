@@ -536,10 +536,28 @@ class V792: public Device {
       buffer.resize(readout(buffer.raw(), buffer.max_size()));
     };
 
-  private:
-    uint8_t channel_step_;
+    // My board V792AA (board revision 4, firmware revision 0x501) duplicates
+    // packets and corrupts the event structure with `readout`. If yours does
+    // so too, consider using this function. Unfortunately, the board does not
+    // assert the bus error when opearting in this mode, so
+    // `set_bus_error_enabled` is useless in this case.
+    // `wa` stands for workaround.
+    uint32_t readout_wa(uint32_t* buffer, uint32_t size);
 
-    void init(Version);
+    uint32_t readout_wa(Packet* buffer, uint32_t size) {
+      return readout_wa(reinterpret_cast<uint32_t*>(buffer), size);
+    };
+
+    void readout_wa(Buffer& buffer) {
+      buffer.resize(readout_wa(buffer.raw(), buffer.max_size()));
+    };
+
+  private:
+    int      vme_handle_;
+    uint32_t vme_address_;
+    uint8_t  channel_step_;
+
+    void init(const Connection&, Version);
 };
 
 };

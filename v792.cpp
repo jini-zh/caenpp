@@ -1,5 +1,7 @@
 #include <cmath>
 
+#include <CAENVMElib.h>
+
 #include "v792.hpp"
 
 namespace caen {
@@ -7,16 +9,18 @@ namespace caen {
 V792::V792(const Connection& connection): Device(connection) {
   if (id() != 792) throw WrongDevice(connection, "V792");
   // Known versions: 0x11 (V792AA), 0x13 (V792AC), 0xE1 (V792NA), 0xE3 (V792NC)
-  init(version() & 0xF0 == 0xE0 ? V792N : V792A);
+  init(connection, version() & 0xF0 == 0xE0 ? V792N : V792A);
 };
 
 V792::V792(const Connection& connection, Version version): Device(connection) {
   if (id() != 792) throw WrongDevice(connection, "V792");
-  init(version);
+  init(connection, version);
 };
 
-void V792::init(Version version) {
+void V792::init(const Connection& connection, Version version) {
   channel_step_ = version == V792A ? 2 : 4;
+  vme_handle_   = vme_handle();
+  vme_address_  = connection.vme;
 };
 
 float V792::fast_clear_window() const {
@@ -42,6 +46,56 @@ void V792::test_event_write(uint16_t events[32]) {
 
 void V792::test_event_write(TestEvent events[32]) {
   test_event_write(reinterpret_cast<uint16_t*>(events));
+};
+
+// This is a workaround for the packet duplication problem. CAENComm_BLTRead
+// calls CAENVME_FIFO_BLTReadCycle under the hood with the cvA32_U_BLT as the
+// address modifier. We change the modifier, but the board stops asserting the
+// bus error when there is no more data to transfer
+uint32_t V792::readout_wa(uint32_t* buffer, uint32_t size) {
+  int result;
+  CVErrorCodes status = CAENVME_FIFOBLTReadCycle(
+      vme_handle_,
+      vme_address_,
+      buffer,
+      size * sizeof(uint32_t),
+      cvA32_U_DATA,
+      cvD32,
+      &result
+  );
+
+  if (status != cvSuccess && status != cvBusError) {
+    // Map VME error to COMM error
+    CAENComm_ErrorCode comm;
+    switch (status) {
+      case (cvCommError):
+        comm = CAENComm_CommError;
+        break;
+      case (cvGenericError):
+        comm = CAENComm_GenericError;
+        break;
+      case (cvInvalidParam):
+        comm = CAENComm_InvalidParam;
+        break;
+      case (cvTimeoutError):
+        comm = CAENComm_CommTimeout;
+        break;
+      case (cvAlreadyOpenError):
+        comm = CAENComm_DeviceAlreadyOpen;
+        break;
+      case (cvMaxBoardCountError):
+        comm = CAENComm_MaxDevicesError;
+        break;
+      case (cvNotSupported):
+        comm = CAENComm_NotSupported;
+        break;
+      default:
+        comm = static_cast<CAENComm_ErrorCode>(static_cast<int>(status) - 100);
+    };
+    throw Device::Error(comm);
+  };
+
+  return result / 4;
 };
 
 };
