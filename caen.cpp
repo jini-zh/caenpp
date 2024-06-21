@@ -119,9 +119,12 @@ const char* Device::WrongDevice::what() const noexcept {
     if (connection_.is_ethernet())
       ss << ", IP address " << connection_.ip;
     else {
-      if (connection_.arg)   ss << ", arg "         << connection_.arg;
-      if (connection_.conet) ss << ", conet node "  << connection_.conet;
-      if (connection_.vme)   ss << ", VME address " << connection_.vme;
+      if (connection_.arg)
+        ss << ", arg " << connection_.arg;
+      if (connection_.conet)
+        ss << ", conet node " << connection_.conet;
+      if (connection_.vme)
+        ss << ", VME address " << std::hex << connection_.vme;
     };
     ss << " is not a " << expected_;
     message = ss.str();
