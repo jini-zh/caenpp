@@ -218,13 +218,14 @@ class V1290: public Device {
     class Packet: public BitField<32> {
       public:
         enum Type: uint8_t {
-          GlobalHeader   = 0b01000,
-          TDCHeader      = 0b00001,
-          TDCMeasurement = 0b00000,
-          TDCTrailer     = 0b00011,
-          TDCError       = 0b00100,
-          GlobalTrailer  = 0b10000,
-          Filler         = 0b11000
+          GlobalHeader           = 0b01000,
+          TDCHeader              = 0b00001,
+          TDCMeasurement         = 0b00000,
+          TDCTrailer             = 0b00011,
+          TDCError               = 0b00100,
+          GlobalTrailer          = 0b10000,
+          ExtendedTriggerTimeTag = 0b10001,
+          Filler                 = 0b11000
         };
 
         static const uint32_t filler = 0xC0000000U;
