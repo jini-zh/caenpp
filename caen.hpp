@@ -154,7 +154,7 @@ class Buffer {
 
     // adjust the fill pointer
     void resize(size_t size) {
-      if (size >= Size)
+      if (size > Size)
         throw std::out_of_range("caen::Buffer: resize: out of range");
       fill_ = size;
     };
