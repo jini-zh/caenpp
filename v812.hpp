@@ -1,5 +1,7 @@
 #pragma once
 
+#include <bitset>
+
 #include "caen.hpp"
 
 namespace caen {
@@ -15,6 +17,10 @@ class V812: public Device {
 
     void enable_channels(uint16_t mask) {
       write16(0x4A, mask);
+    };
+
+    void enable_channels(std::bitset<16> mask) {
+      write16(0x4A, mask.to_ulong());
     };
 
     // channels_set: 0 for channels 0 to 7, 1 for channels 8 to 15
