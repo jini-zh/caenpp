@@ -36,4 +36,7 @@ uninstall:
 	-rmdir -v --ignore-fail-on-non-empty $(includedir)
 
 clean:
-	rm -f config.mak $(objects:=.o) libcaen++.so
+	rm -f $(objects:=.o) libcaen++.so
+
+distclean: clean
+	rm -f config.mak
