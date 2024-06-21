@@ -203,7 +203,11 @@ uint32_t Device::blt_read(
     uint32_t address, uint32_t* buffer, unsigned size
 ) const {
   int nwords;
-  COMM(BLTRead, handle, address, buffer, size, &nwords);
+  CAENComm_ErrorCode status = CAENComm_BLTRead(
+      handle, address, buffer, size, &nwords
+  );
+  if (status != CAENComm_Success && status != CAENComm_Terminated)
+    throw Error(status);
   return nwords;
 };
 
@@ -211,7 +215,11 @@ uint32_t Device::mblt_read(
     uint32_t address, uint32_t* buffer, unsigned size
 ) const {
   int nwords;
-  COMM(MBLTRead, handle, address, buffer, size, &nwords);
+  CAENComm_ErrorCode status = CAENComm_MBLTRead(
+      handle, address, buffer, size, &nwords
+  );
+  if (status != CAENComm_Success && status != CAENComm_Terminated)
+    throw Error(status);
   return nwords;
 };
 
