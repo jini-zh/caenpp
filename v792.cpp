@@ -6,7 +6,8 @@ namespace caen {
 
 V792::V792(const Connection& connection): Device(connection) {
   if (id() != 792) throw WrongDevice(connection, "V792");
-  init(version() == 0x11 ? V792A : V792N);
+  // Known versions: 0x11 (V792AA), 0x13 (V792AC), 0xE1 (V792NA), 0xE3 (V792NC)
+  init(version() & 0xF0 == 0xE0 ? V792N : V792A);
 };
 
 V792::V792(const Connection& connection, Version version): Device(connection) {
