@@ -29,10 +29,20 @@ class V812: public Device {
       write16(0x40 + ((channels_set & 1) << 1), value);
     };
 
+    void set_output_width(uint8_t value) {
+      set_output_width(0, value);
+      set_output_width(1, value);
+    };
+
     // channels_set: 0 for channels 0 to 7, 1 for channels 8 to 15
     // value: 0 -> 118 ns, 255 -> 1625 ns; is it linear in between?
     void set_dead_time(uint8_t channels_set, uint8_t value) {
       write16(0x44 + ((channels_set & 1) << 1), value);
+    };
+
+    void set_dead_time(uint8_t value) {
+      set_dead_time(0, value);
+      set_dead_time(1, value);
     };
 
     void set_majority_threshold(uint8_t value) {
