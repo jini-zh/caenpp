@@ -913,7 +913,7 @@ class V1290: public Device {
     void scan_path_read(uint8_t tdc, uint16_t* scan_path) const;
 
     uint32_t readout(uint32_t* buffer, uint16_t size) {
-      return blt_read(0, buffer, size);
+      return mblt_read(0, buffer, size);
     };
 
     uint32_t readout(Packet* buffer, uint16_t size) {
