@@ -10,12 +10,8 @@ class V812: public Device {
     V812(const Connection&);
     V812(V812&& device): Device(std::move(device)) {};
 
-    void set_threshold(uint8_t channel, uint8_t value) {
-      write16(channel << 1, value);
-    };
-
     // -1 to -255 mV, in volts
-    void set_threshold_v(uint8_t channel, float voltage);
+    void set_threshold(uint8_t channel, float voltage);
 
     void enable_channels(uint16_t mask) {
       write16(0x4A, mask);
