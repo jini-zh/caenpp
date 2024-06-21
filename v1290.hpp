@@ -926,19 +926,11 @@ class V1290: public Device {
   private:
     Version version_;
 
-    uint16_t micro_read() const {
-      return read16(0x102E);
-    };
-
-    void micro_write(uint16_t value) {
-      write16(0x102E, value);
-    };
-
+    void micro_wait(uint8_t bit) const;
+    uint16_t micro_read() const;
+    void micro_write(uint16_t value);
     // Not every call to `micro_write` changes the visible state of the board
-    void micro_write(uint16_t value) const {
-      const_cast<V1290*>(this)->write16(0x102E, value);
-    };
-
+    void micro_write(uint16_t value) const;
 
     float cycles_to_seconds(int16_t cycles) const {
       return cycles * 25e-9;

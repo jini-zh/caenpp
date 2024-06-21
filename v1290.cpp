@@ -1,4 +1,7 @@
 #include <algorithm>
+#include <thread>
+#include <chrono>
+
 #include <cmath>
 
 #include "v1290.hpp"
@@ -229,6 +232,25 @@ void V1290::enable_test_mode(uint32_t test_word) {
 void V1290::scan_path_read(uint8_t tdc, uint16_t* path) const {
   micro_write(0xC900 | tdc);
   for (int i = 0; i < scan_path_length; ++i) path[i] = micro_read();
+};
+
+void V1290::micro_wait(uint8_t bit) const {
+  while (!(read16(0x1030) & bit))
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+};
+
+uint16_t V1290::micro_read() const {
+  micro_wait(2);
+  return read16(0x102E);
+};
+
+void V1290::micro_write(uint16_t value) {
+  micro_wait(1);
+  write16(0x102E, value);
+};
+
+void V1290::micro_write(uint16_t value) const {
+  const_cast<V1290*>(this)->micro_write(value);
 };
 
 };
