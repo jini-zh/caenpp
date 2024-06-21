@@ -253,4 +253,8 @@ void V1290::micro_write(uint16_t value) const {
   const_cast<V1290*>(this)->micro_write(value);
 };
 
+int16_t V1290::seconds_to_cycles(float seconds) const {
+  return std::round(seconds / 25e-9);
+};
+
 };
