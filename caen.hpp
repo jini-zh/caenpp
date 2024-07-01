@@ -9,8 +9,8 @@ namespace caen {
 
 class Error: public std::exception {};
 
-template <int bits> struct UInt_overflow__ {
-  static_assert(false, "UInt: too many bits for an integer");
+template <unsigned bits> struct UInt_overflow__ {
+  static_assert(bits, "UInt: too many bits for an integer");
 };
 
 template <unsigned bits>
