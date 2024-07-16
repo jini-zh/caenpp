@@ -245,16 +245,16 @@ class V792: public Device {
 
     // use `reset` to reset the board
     bool software_reset() const {
-      return read16(0x1006) & 0x20;
+      return read16(0x1006) & 0x80;
     };
 
     void set_software_reset(bool value) {
-      write16(value ? 0x1006 : 0x1008, 0x20);
+      write16(value ? 0x1006 : 0x1008, 0x80);
     };
 
     void reset() {
-      write16(0x1006, 0x20);
-      write16(0x1008, 0x20);
+      write16(0x1006, 0x80);
+      write16(0x1008, 0x80);
     };
 
     uint8_t interrupt_level() const {
