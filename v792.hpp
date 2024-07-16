@@ -441,12 +441,8 @@ class V792: public Device {
       write16(0x1064, address);
     };
 
-    uint16_t test_register() const {
-      return read16(0x1068);
-    };
-
-    void set_test_register(uint16_t value) {
-      write16(0x1068, value);
+    void trigger() {
+      write16(0x1068, 1);
     };
 
     uint8_t slide_constant() const {
