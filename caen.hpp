@@ -54,7 +54,7 @@ class BitField {
     };
 
     value_type bits(unsigned start, unsigned end) const {
-      return (value_ & (static_cast<value_type>(1) << end + 1) - 1) >> start;
+      return (value_ & ~(~static_cast<value_type>(1) << end)) >> start;
     };
 
     void set_bits(unsigned start, unsigned end, value_type bits) {
