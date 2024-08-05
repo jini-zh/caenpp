@@ -53,7 +53,17 @@ class V1290: public Device {
         defbit(event_fifo_enabled, 8);
 
         // Extended trigger time tag enabled (default: false)
-        defbit(ettt_enabled, 9);
+        // XXX: The manual says in section 2.5.1 that to enable the extended
+        // trigger time tag we need to set bits 9 and 11 of the control
+        // register. Note however that bit 11 of the control register is marked
+        // as reserved in figure 6.9. Apparently with it on the GEO address in
+        // the trailer is replaced with the least significant bits of the
+        // extended trigge time tag, improving its time resolution from 800 ns
+        // to 25 ns. The GEO address in the header is not affected.
+        bool ettt_enabled() const { return bit(9); };
+        void set_ettt_enabled(bool value) {
+          set_bits(0x0A00, value ? 0xFFFF : 0);
+        };
 
         // MEB access with 16 Mb address range in BLT/MBLT/2eVME/2eSST enabled
         // (requires firmware rev. 0.C and later)

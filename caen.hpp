@@ -52,13 +52,23 @@ class BitField {
       value_ = value_ & ~mask | static_cast<value_type>(bit) << index & mask;
     };
 
+    value_type bits(value_type mask) const {
+      return value_ & mask;
+    };
+
+    void set_bits(value_type mask, value_type bits) {
+      value_ = value_ & ~mask | bits & mask;
+    };
+
     value_type bits(unsigned start, unsigned end) const {
-      return (value_ & ~(~static_cast<value_type>(1) << end)) >> start;
+      return bits(~(~static_cast<value_type>(1) << end)) >> start;
     };
 
     void set_bits(unsigned start, unsigned end, value_type bits) {
-      value_type mask = ~(~static_cast<value_type>(1) << end - start) << start;
-      value_ = value_ & ~mask | bits << start & mask;
+      set_bits(
+          ~(~static_cast<value_type>(1) << end - start) << start,
+          bits << start
+      );
     };
 };
 
