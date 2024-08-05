@@ -37,12 +37,11 @@ class BitField {
   public:
     using value_type = UInt<NBits>;
 
+    value_type value_;
+
     BitField(value_type value = 0): value_(value) {};
 
     operator value_type() { return value_; };
-
-  protected:
-    value_type value_;
 
     bool bit(unsigned index) const {
       return value_ & (static_cast<value_type>(1) << index);
