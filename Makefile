@@ -8,6 +8,8 @@ includedir  := $(prefix)/include
 libdir     := $(DESTDIR)$(libdir)
 includedir := $(DESTDIR)$(includedir)
 
+CXXFLAGS ?= -O2 -pipe -march=native
+
 version = 0.0.0
 
 objects = caen $(digitizer) v792 v812 v1290 v6534
