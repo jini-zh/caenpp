@@ -10,7 +10,7 @@ includedir := $(DESTDIR)$(includedir)
 
 version = 0.0.0
 
-objects = caen digitizer v792 v812 v1290 v6534
+objects = caen $(digitizer) v792 v812 v1290 v6534
 
 .PHONY: install uninstall clean
 
