@@ -254,9 +254,9 @@ class V1290: public Device {
       public:
         GlobalHeader(uint32_t value): Packet(value) {};
 
-        uint8_t  geo()     const { return bits( 0,  4); };
-        uint32_t nevents() const { return bits( 5, 26); };
-        uint8_t  type()    const { return bits(27, 31); };
+        uint8_t  geo()   const { return bits( 0,  4); };
+        uint32_t event() const { return bits( 5, 26); };
+        uint8_t  type()  const { return bits(27, 31); };
     };
 
     class TDCHeader: public Packet {
