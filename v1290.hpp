@@ -252,6 +252,7 @@ class V1290: public Device {
 
     class GlobalHeader: public Packet {
       public:
+        GlobalHeader(): Packet(Type::GlobalHeader << 27) {};
         GlobalHeader(uint32_t value): Packet(value) {};
 
         uint8_t  geo()   const { return bits( 0,  4); };
@@ -261,6 +262,7 @@ class V1290: public Device {
 
     class TDCHeader: public Packet {
       public:
+        TDCHeader(): Packet(Type::TDCHeader << 27) {};
         TDCHeader(uint32_t value): Packet(value) {};
 
         uint16_t bunch() const { return bits( 0, 11); };
@@ -271,6 +273,7 @@ class V1290: public Device {
 
     class TDCMeasurement: public Packet {
       public:
+        TDCMeasurement(): Packet(Type::TDCMeasurement << 27) {};
         TDCMeasurement(uint32_t value): Packet(value) {};
 
         uint32_t value()    const { return bits( 0, 20); };
@@ -281,6 +284,7 @@ class V1290: public Device {
 
     class TDCTrailer: public Packet {
       public:
+        TDCTrailer(): Packet(Type::TDCTrailer << 27) {};
         TDCTrailer(uint32_t value): Packet(value) {};
 
         uint16_t nwords() const { return bits( 0, 11); };
@@ -291,6 +295,7 @@ class V1290: public Device {
 
     class TDCError: public Packet {
       public:
+        TDCError(): Packet(Type::TDCError << 27) {};
         TDCError(uint32_t value): Packet(value) {};
 
         uint16_t errors() const { return bits( 0, 14); };
@@ -300,6 +305,7 @@ class V1290: public Device {
 
     class ExtendedTriggerTimeTag: public Packet {
       public:
+        ExtendedTriggerTimeTag(): Packet(Type::ExtendedTriggerTimeTag << 27) {};
         ExtendedTriggerTimeTag(uint32_t value): Packet(value) {};
 
         uint32_t value() const { return bits( 0, 26); };
@@ -308,6 +314,7 @@ class V1290: public Device {
 
     class GlobalTrailer: public Packet {
       public:
+        GlobalTrailer(): Packet(Type::GlobalTrailer << 27) {};
         GlobalTrailer(uint32_t value): Packet(value) {};
 
         uint8_t  geo()          const { return bits( 0,  4); };
@@ -320,6 +327,7 @@ class V1290: public Device {
 
     class Filler: public Packet {
       public:
+        Filler(): Packet() {};
         Filler(uint32_t value): Packet(value) {};
 
         uint8_t type() const { return bits(27, 31); };
