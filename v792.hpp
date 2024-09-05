@@ -538,15 +538,21 @@ class V792: public Device {
     // assert the bus error when opearting in this mode, so
     // `set_bus_error_enabled` is useless in this case.
     // `wa` stands for workaround.
-    uint32_t readout_wa(uint32_t* buffer, uint32_t size);
+    //
+    // The problem was the old firmware. Please ask CAEN for an upgrade. This
+    // function is deprecated and will be removed.
+    uint32_t readout_wa(uint32_t* buffer, uint32_t size) __attribute__((deprecated));
 
-    uint32_t readout_wa(Packet* buffer, uint32_t size) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    uint32_t readout_wa(Packet* buffer, uint32_t size) __attribute__((deprecated)) {
       return readout_wa(reinterpret_cast<uint32_t*>(buffer), size);
     };
 
-    void readout_wa(Buffer& buffer) {
+    void readout_wa(Buffer& buffer) __attribute__((deprecated)) {
       buffer.resize(readout_wa(buffer.raw(), buffer.max_size()));
     };
+#pragma GCC diagnostic pop
 
   private:
     int      vme_handle_;
