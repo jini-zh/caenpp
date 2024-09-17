@@ -42,7 +42,7 @@ const float V1290::dead_times[4] = {
 };
 
 V1290::V1290(const Connection& connection): Device(connection) {
-  if (id() != 1290) throw WrongDevice(connection, "V1290");
+  if (oui() != OUI || id() != 1290) throw WrongDevice(connection, "V1290");
   version_ = static_cast<Version>(read16(0x4030));
 };
 

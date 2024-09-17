@@ -7,6 +7,8 @@
 
 namespace caen {
 
+const uint32_t OUI = 0x40E6;
+
 class Error: public std::exception {};
 
 template <unsigned bits> struct UInt_overflow__ {
