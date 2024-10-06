@@ -191,6 +191,14 @@ class Buffer {
 class Device {
   public:
     struct Connection {
+      struct Type {
+        const char* name;
+        const char* pretty_name;
+        CAENComm_ConnectionType link;
+      };
+
+      static const std::array<Type, 8> types;
+
       CAENComm_ConnectionType link;
       uint32_t                arg;
       uint32_t                conet;
@@ -277,6 +285,8 @@ class Device {
         uint32_t step
     ) const;
 };
+
+CAENComm_ConnectionType str_to_link(const char*); // returns -1 on failure
 
 template <> uint16_t Device::read<16>(uint32_t address) const;
 template <> uint32_t Device::read<32>(uint32_t address) const;

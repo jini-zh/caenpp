@@ -16,17 +16,21 @@ END
 
 prefix=/usr/local
 exec_prefix=
+bindir=
 libdir=
 includedir=
 digitizer=digitizer
 
 argv=`(getopt -o '' -l 'help,prefix:,exec-prefix:,libdir:,includedir:,without-digitizer' -- "$@")` || exit $?
+echo creating config.log
+echo "$0 $*" > config.log
 eval "set -- ${argv[*]}"
 while [[ $1 != -- ]]; do
   case $1 in
     --help)              usage;            exit;;
     --prefix)            prefix="$2";      shift 2;;
     --exec-prefix)       exec_prefix="$2"; shift 2;;
+    --bindir)            bindir="$2"       shift 2;;
     --libdir)            libdir="$2";      shift 2;;
     --includedir)        includedir="$2";  shift 2;;
     --without-digitizer) digitizer=;       shift;;
@@ -35,6 +39,10 @@ done
 
 if [[ -z "$exec_prefix" ]]; then
   exec_prefix="$prefix"
+fi
+
+if [[ -z "$bindir" ]]; then
+  bindir="$exec_prefix/bin"
 fi
 
 if [[ -z "$libdir" ]]; then
@@ -49,6 +57,7 @@ echo creating config.mak
 cat > config.mak <<END
 prefix      := $prefix
 exec_prefix := $exec_prefix
+bindir      := $bindir
 libdir      := $libdir
 includedir  := $includedir
 digitizer   := $digitizer

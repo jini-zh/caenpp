@@ -6,6 +6,20 @@
 
 namespace caen {
 
+const std::array<Device::Connection::Type, 8>
+Device::Connection::types = {
+  {
+    { "usb",         "USB",               CAENComm_USB             },
+    { "optical",     "optical link",      CAENComm_OpticalLink     },
+    { "a4818-v2718", "USB A4818 - V2718", CAENComm_USB_A4818_V2718 },
+    { "a4818-v3718", "USB A4818 - V3718", CAENComm_USB_A4818_V3718 },
+    { "a4818-v4718", "USB A4818 - V4718", CAENComm_USB_A4818_V4718 },
+    { "a4818",       "USB A4818",         CAENComm_USB_A4818       },
+    { "eth-v4718",   "ETH V4718",         CAENComm_ETH_V4718       },
+    { "usb-v4718",   "USB V4718",         CAENComm_ETH_V4718       }
+  }
+};
+
 static const char* comm_strerror(CAENComm_ErrorCode code) {
   switch (code) {
     case CAENComm_Success:
@@ -43,27 +57,18 @@ static const char* comm_strerror(CAENComm_ErrorCode code) {
   };
 };
 
-static const char* comm_str_connection_link(CAENComm_ConnectionType link) {
-  switch (link) {
-    case CAENComm_USB:
-      return "USB";
-    case CAENComm_OpticalLink:
-      return "optical link";
-    case CAENComm_USB_A4818_V2718:
-      return "USB A4818 - V2718";
-    case CAENComm_USB_A4818_V3718:
-      return "USB A4818 - V3718";
-    case CAENComm_USB_A4818_V4718:
-      return "USB A4818 - V4718";
-    case CAENComm_USB_A4818:
-      return "USB A4818";
-    case CAENComm_ETH_V4718:
-      return "ETH V4718";
-    case CAENComm_USB_V4718:
-      return "USB V4718";
-    default:
-      return "unknown";
-  };
+static const char* connection_type_pretty_name(CAENComm_ConnectionType link) {
+  for (auto& type : Device::Connection::types)
+    if (type.link == link)
+      return type.pretty_name;
+  return "unknown";
+};
+
+CAENComm_ConnectionType str_to_link(const char* string) {
+  for (auto& type : Device::Connection::types)
+    if (strcasecmp(type.name, string) == 0)
+      return type.link;
+  return static_cast<CAENComm_ConnectionType>(-1);
 };
 
 bool Device::Connection::is_ethernet() const {
@@ -115,7 +120,7 @@ const char* Device::WrongDevice::what() const noexcept {
     std::stringstream ss;
     ss
       << "Device connected through "
-      << comm_str_connection_link(connection_.link);
+      << connection_type_pretty_name(connection_.link);
     if (connection_.is_ethernet())
       ss << ", IP address " << connection_.ip;
     else {
