@@ -231,7 +231,11 @@ int main(int argc, char** argv) {
     else
       connection.arg = arg ? str_to_uint32(arg) : 0;
     connection.conet = conet ? str_to_uint32(conet)   : 0;
-    connection.vme   = vme   ? str_to_uint16(vme, 16) : 0;
+    if (vme) {
+      connection.vme = str_to_uint16(vme, 16);
+      connection.vme <<= 16;
+    } else
+      connection.vme = 0;
 
     bool wide = false;
     if (access_mode)
