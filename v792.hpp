@@ -114,6 +114,12 @@ class V792: public Device {
     };
 
     // Data packets
+    class Header;
+    class Data;
+    class NData;
+    class EndOfBlock;
+    class Invalid;
+
     class Packet: public BitField<32> {
       public:
         enum Type {
@@ -128,20 +134,37 @@ class V792: public Device {
         Packet(uint32_t value = invalid): BitField<32>(value) {};
 
         uint8_t type() const { return bits(24, 26); };
+        void set_type(uint8_t type) { set_bits(24, 26, type); };
+
         template <typename P> P as() const {
           static_assert(std::is_base_of<Packet, P>::value);
           return P(value_);
         };
+
+        V792::Header     header()       const { return as<V792::Header>(); };
+        V792::Data       data()         const { return as<V792::Data>  (); };
+        V792::NData      ndata()        const { return as<V792::NData> (); };
+        V792::EndOfBlock end_of_block() const { return as<V792::EndOfBlock>(); };
     };
 
     class Header: public Packet {
       public:
+        Header(): Packet(Type::Header << 24) {};
         Header(uint32_t value): Packet(value) {};
+        Header(uint8_t count, uint8_t crate, uint8_t geo): Header() {
+          set_count(count);
+          set_crate(crate);
+          set_geo(geo);
+        };
 
         uint8_t count() const { return bits( 8, 13); };
         uint8_t crate() const { return bits(16, 23); };
         uint8_t type()  const { return bits(24, 26); };
         uint8_t geo()   const { return bits(27, 31); };
+
+        void set_count(uint8_t count) { set_bits( 8, 13, count); };
+        void set_crate(uint8_t crate) { set_bits(16, 23, crate); };
+        void set_geo  (uint8_t geo  ) { set_bits(27, 31, geo  ); };
     };
 
     // XXX: V792 and V792N have slightly different data formats: bit width of
@@ -149,7 +172,22 @@ class V792: public Device {
     // when readout, or shift the channel number one bit to the right.
     class Data: public Packet {
       public:
+        Data(): Packet(Type::Data << 24) {};
         Data(uint32_t value): Packet(value) {};
+        Data(
+            uint16_t value,
+            bool overflow,
+            bool underflow,
+            uint8_t channel,
+            uint8_t geo
+        ): Data()
+        {
+          set_value(value);
+          set_overflow(overflow);
+          set_underflow(underflow);
+          set_channel(channel);
+          set_geo(geo);
+        };
 
         uint16_t value()     const { return bits(0, 11);  };
         bool     overflow()  const { return bit(12);      };
@@ -157,12 +195,33 @@ class V792: public Device {
         uint8_t  channel()   const { return bits(16, 20); };
         uint8_t  type()      const { return bits(24, 26); };
         uint8_t  geo()       const { return bits(27, 31); };
+
+        void set_value    (uint16_t value    ) { set_bits(0, 11, value   ); };
+        void set_overflow (bool     overflow ) { set_bit(12, overflow    ); };
+        void set_underflow(bool     underflow) { set_bit(13, underflow   ); };
+        void set_channel  (uint8_t  channel  ) { set_bits(16, 20, channel); };
+        void set_geo      (uint8_t  geo      ) { set_bits(27, 31, geo    ); };
     };
 
     // For V792N, see the comment above.
     class NData: public Packet {
       public:
+        NData(): Packet(Type::Data << 24) {};
         NData(uint32_t value): Packet(value) {};
+        NData(
+            uint16_t value,
+            bool overflow,
+            bool underflow,
+            uint8_t channel,
+            uint8_t geo
+        ): NData()
+        {
+          set_value(value);
+          set_overflow(overflow);
+          set_underflow(underflow);
+          set_channel(channel);
+          set_geo(geo);
+        };
 
         uint16_t value()     const { return bits(0, 11);  };
         bool     overflow()  const { return bit(12);      };
@@ -170,19 +229,34 @@ class V792: public Device {
         uint8_t  channel()   const { return bits(17, 20); };
         uint8_t  type()      const { return bits(24, 26); };
         uint8_t  geo()       const { return bits(27, 31); };
+
+        void set_value    (uint16_t value    ) { set_bits(0, 11, value   ); };
+        void set_overflow (bool     overflow ) { set_bit(12, overflow    ); };
+        void set_underflow(bool     underflow) { set_bit(13, underflow   ); };
+        void set_channel  (uint8_t  channel  ) { set_bits(17, 20, channel); };
+        void set_geo      (uint8_t  geo      ) { set_bits(27, 31, geo    ); };
     };
 
     class EndOfBlock: public Packet {
       public:
+        EndOfBlock(): Packet(Type::EndOfBlock << 24) {};
         EndOfBlock(uint32_t value): Packet(value) {};
+        EndOfBlock(uint32_t event, uint8_t geo): EndOfBlock() {
+          set_event(event);
+          set_geo(geo);
+        };
 
         uint32_t event() const { return bits( 0, 23); };
         uint8_t  type()  const { return bits(24, 26); };
         uint8_t  geo()   const { return bits(27, 31); };
+
+        void set_event(uint32_t event) { set_bits( 0, 23, event); };
+        void set_geo  (uint8_t  geo  ) { set_bits(27, 31, geo);   };
     };
 
     class Invalid: public Packet {
       public:
+        Invalid(): Packet(Type::Invalid << 24) {};
         Invalid(uint32_t value): Packet(value) {};
 
         uint8_t type() const { return bits(24, 26); };

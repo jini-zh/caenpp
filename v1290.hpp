@@ -225,6 +225,15 @@ class V1290: public Device {
     };
 
     // Data packets
+    class GlobalHeader;
+    class TDCHeader;
+    class TDCMeasurement;
+    class TDCTrailer;
+    class TDCError;
+    class GlobalTrailer;
+    class ExtendedTriggerTimeTag;
+    class Filler;
+
     class Packet: public BitField<32> {
       public:
         enum Type: uint8_t {
@@ -243,10 +252,39 @@ class V1290: public Device {
         Packet(uint32_t value = filler): BitField<32>(value) {};
 
         uint8_t type() const { return bits(27, 31); };
+        void set_type(uint8_t type) { set_bits(27, 31, type); };
 
         template <typename P> P as() const {
           static_assert(std::is_base_of<Packet, P>::value);
           return P(value_);
+        };
+
+        V1290::GlobalHeader header() const {
+          return as<V1290::GlobalHeader>();
+        };
+
+        V1290::TDCHeader tdc_header() const {
+          return as<V1290::TDCHeader>();
+        }
+
+        V1290::TDCMeasurement measurement() const {
+          return as<V1290::TDCMeasurement>();
+        };
+
+        V1290::TDCTrailer tdc_trailer() const {
+          return as<V1290::TDCTrailer>();
+        };
+
+        V1290::TDCError error() const {
+          return as<V1290::TDCError>();
+        };
+
+        V1290::GlobalTrailer trailer() const {
+          return as<V1290::GlobalTrailer>();
+        };
+
+        V1290::ExtendedTriggerTimeTag ettt() const {
+          return as<V1290::ExtendedTriggerTimeTag>();
         };
     };
 
@@ -255,9 +293,17 @@ class V1290: public Device {
         GlobalHeader(): Packet(Type::GlobalHeader << 27) {};
         GlobalHeader(uint32_t value): Packet(value) {};
 
+        GlobalHeader(uint8_t geo, uint32_t event): GlobalHeader() {
+          set_geo(geo);
+          set_event(event);
+        };
+
         uint8_t  geo()   const { return bits( 0,  4); };
         uint32_t event() const { return bits( 5, 26); };
         uint8_t  type()  const { return bits(27, 31); };
+
+        void set_geo  (uint8_t  geo  ) { set_bits(0, 4,  geo);   };
+        void set_event(uint32_t event) { set_bits(5, 26, event); };
     };
 
     class TDCHeader: public Packet {
@@ -265,10 +311,20 @@ class V1290: public Device {
         TDCHeader(): Packet(Type::TDCHeader << 27) {};
         TDCHeader(uint32_t value): Packet(value) {};
 
+        TDCHeader(uint16_t bunch, uint16_t event, uint8_t tdc): TDCHeader() {
+          set_bunch(bunch);
+          set_event(event);
+          set_tdc(tdc);
+        };
+
         uint16_t bunch() const { return bits( 0, 11); };
         uint16_t event() const { return bits(12, 23); };
         uint8_t  tdc()   const { return bits(24, 25); };
         uint8_t  type()  const { return bits(27, 31); };
+
+        void set_bunch(uint16_t bunch) { set_bits( 0, 11, bunch); };
+        void set_event(uint16_t event) { set_bits(12, 23, event); };
+        void set_tdc  (uint8_t  tdc)   { set_bits(24, 25, tdc);   };
     };
 
     class TDCMeasurement: public Packet {
@@ -276,10 +332,22 @@ class V1290: public Device {
         TDCMeasurement(): Packet(Type::TDCMeasurement << 27) {};
         TDCMeasurement(uint32_t value): Packet(value) {};
 
+        TDCMeasurement(uint32_t value, uint8_t channel, bool trailing):
+          TDCMeasurement()
+        {
+          set_value(value);
+          set_channel(channel);
+          set_trailing(trailing);
+        };
+
         uint32_t value()    const { return bits( 0, 20); };
         uint8_t  channel()  const { return bits(21, 25); };
         bool     trailing() const { return bit(26);      };
         uint8_t  type()     const { return bits(27, 31); };
+
+        void set_value   (uint32_t value)     { set_bits( 0, 20, value  ); };
+        void set_channel (uint8_t  channel)   { set_bits(21, 25, channel); };
+        void set_trailing(bool     trailing)  { set_bit(26, trailing);     };
     };
 
     class TDCTrailer: public Packet {
@@ -287,10 +355,20 @@ class V1290: public Device {
         TDCTrailer(): Packet(Type::TDCTrailer << 27) {};
         TDCTrailer(uint32_t value): Packet(value) {};
 
+        TDCTrailer(uint16_t nwords, uint16_t event, uint8_t tdc): TDCTrailer() {
+          set_nwords(nwords);
+          set_event(event);
+          set_tdc(tdc);
+        };
+
         uint16_t nwords() const { return bits( 0, 11); };
         uint16_t event()  const { return bits(12, 23); };
         uint8_t  tdc()    const { return bits(24, 25); };
         uint8_t  type()   const { return bits(27, 31); };
+
+        void set_nwords(uint16_t nwords) { set_bits( 0, 11, nwords); };
+        void set_event (uint16_t event ) { set_bits(12, 23, event ); };
+        void set_tdc   (uint8_t  tdc   ) { set_bits(24, 25, tdc   ); };
     };
 
     class TDCError: public Packet {
@@ -298,9 +376,17 @@ class V1290: public Device {
         TDCError(): Packet(Type::TDCError << 27) {};
         TDCError(uint32_t value): Packet(value) {};
 
+        TDCError(uint16_t errors, uint8_t tdc): TDCError() {
+          set_errors(errors);
+          set_tdc(tdc);
+        };
+
         uint16_t errors() const { return bits( 0, 14); };
         uint8_t  tdc()    const { return bits(24, 25); };
         uint8_t  type()   const { return bits(27, 31); };
+
+        void set_errors(uint16_t errors) { set_bits( 0, 14, errors); };
+        void set_tdc   (uint8_t  tdc   ) { set_bits(24, 25, tdc   ); };
     };
 
     class ExtendedTriggerTimeTag: public Packet {
@@ -308,8 +394,14 @@ class V1290: public Device {
         ExtendedTriggerTimeTag(): Packet(Type::ExtendedTriggerTimeTag << 27) {};
         ExtendedTriggerTimeTag(uint32_t value): Packet(value) {};
 
+        ExtendedTriggerTimeTag(uint32_t value, int): ExtendedTriggerTimeTag() {
+          set_value(value);
+        };
+
         uint32_t value() const { return bits( 0, 26); };
         uint8_t  type()  const { return bits(27, 31); };
+
+        void set_value(uint32_t value) { set_bits(0, 26, value); };
     };
 
     class GlobalTrailer: public Packet {
@@ -317,12 +409,33 @@ class V1290: public Device {
         GlobalTrailer(): Packet(Type::GlobalTrailer << 27) {};
         GlobalTrailer(uint32_t value): Packet(value) {};
 
+        GlobalTrailer(
+            uint8_t  geo,
+            uint16_t nwords,
+            bool     errors,
+            bool     overflow,
+            bool     trigger_lost
+        ): GlobalTrailer()
+        {
+          set_geo(geo);
+          set_nwords(nwords);
+          set_errors(errors);
+          set_overflow(overflow);
+          set_trigger_lost(trigger_lost);
+        };
+
         uint8_t  geo()          const { return bits( 0,  4); };
         uint16_t nwords()       const { return bits(5, 20);  };
         bool     errors()       const { return bit(24);      };
         bool     overflow()     const { return bit(25);      };
         bool     trigger_lost() const { return bit(26);      };
         uint8_t  type()         const { return bits(27, 31); };
+
+        void set_geo         (uint8_t  geo)      { set_bits(0, 4,  geo   ); };
+        void set_nwords      (uint16_t nwords)   { set_bits(5, 20, nwords); };
+        void set_errors      (bool     errors)   { set_bit(24, errors);     };
+        void set_overflow    (bool     overflow) { set_bit(25, overflow);   };
+        void set_trigger_lost(bool trigger_lost) { set_bits(26, trigger_lost); };
     };
 
     class Filler: public Packet {
