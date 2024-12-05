@@ -595,7 +595,7 @@ class V792: public Device {
     };
 
     uint32_t readout(uint32_t* buffer, uint32_t size) {
-      return blt_read(0, buffer, size);
+      return mblt_read(0, buffer, size);
     };
 
     uint32_t readout(Packet* buffer, uint32_t size) {
