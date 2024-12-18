@@ -32,7 +32,7 @@ install: libcaen++.so caen-rw
 	install -d $(libdir)
 	install -m 755 libcaen++.so $(libdir)/libcaen++.so.$(version)
 	ln -sf libcaen++.so.$(version) $(libdir)/libcaen++.so
-	ldconfig $(libdir)
+	-ldconfig $(libdir)
 	install -d $(includedir)/caen++
 	install -m 644 $(objects:=.hpp) $(includedir)/caen++
 	install -d $(bindir)
