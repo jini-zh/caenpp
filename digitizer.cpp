@@ -220,6 +220,45 @@ Digitizer::Digitizer(
   };
 };
 
+static CAEN_DGTZ_ConnectionType comm_to_dgtz(CAENComm_ConnectionType type) {
+  switch (type) {
+#define def(name) \
+    case CAENComm_ ## name: \
+      return CAEN_DGTZ_ ## name
+    def(USB);
+    def(OpticalLink);
+    def(USB_A4818_V2718);
+    def(USB_A4818_V3718);
+    def(USB_A4818_V4718);
+    def(USB_A4818);
+    def(ETH_V4718);
+    def(USB_V4718);
+#undef def
+    default:
+      std::stringstream ss;
+      ss << "Unknown CAENComm_ConnectionType: " << type;
+      throw std::logic_error(ss.str());
+  };
+};
+
+Digitizer::Digitizer(const Device::Connection& connection) {
+  uint32_t arg = connection.arg;
+  DGTZ(
+      OpenDigitizer2,
+      comm_to_dgtz(connection.link),
+      &arg,
+      connection.conet,
+      connection.vme,
+      &digitizer
+  );
+  try {
+    DGTZ(GetInfo, digitizer, &info_);
+  } catch (...) {
+    CAEN_DGTZ_CloseDigitizer(digitizer);
+    throw;
+  };
+};
+
 Digitizer::~Digitizer() {
   if (digitizer >= 0) CAEN_DGTZ_CloseDigitizer(digitizer);
 };

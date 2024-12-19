@@ -62,6 +62,7 @@ class Digitizer {
     Digitizer(
         CAEN_DGTZ_ConnectionType link, uint32_t arg, int conet, uint32_t vme
     );
+    Digitizer(const Device::Connection&);
     Digitizer(Digitizer&&);
     ~Digitizer();
 
