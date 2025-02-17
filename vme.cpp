@@ -1,42 +1,53 @@
 #include <sstream>
 
+#include <cstring>
+
 #include "vme.hpp"
 
 namespace caen {
 
-const char* Bridge::Connection::bridgeTypeName(BridgeType type) {
-  switch (type) {
-    case BridgeType::V1718:
-      return "V1718";
-    case BridgeType::V2718:
-      return "V2718";
-    case BridgeType::V3718:
-      return "V3718";
-    case BridgeType::A2719:
-      return "A2719";
-    case BridgeType::None:
-      return "None";
-    default:
-      return "invalid";
-  };
+#define defenum_names(type, names, encode, decode, ...) \
+  static const char* names[] = { __VA_ARGS__ }; \
+  const char* encode(type value) { \
+    return enum_to_str( \
+        static_cast<int>(value), \
+        names, \
+        sizeof(names) / sizeof(*names) \
+    ); \
+  }; \
+  type decode(const char* string) { \
+    return static_cast<type>( \
+        str_to_enum(string, names, sizeof(names) / sizeof(*names)) \
+    ); \
+  }
+
+static const char* enum_to_str(int index, const char** names, unsigned count) {
+  if (index < 0 || index >= count) return nullptr;
+  return names[count];
 };
 
-const char* Bridge::Connection::conetTypeName(ConetType type) {
-  switch (type) {
-    case ConetType::A2818:
-      return "A2818";
-    case ConetType::A3818:
-      return "A3818";
-    case ConetType::A4818:
-      return "A4818";
-    case ConetType::A5818:
-      return "A5818";
-    case ConetType::None:
-      return "None";
-    default:
-      return "invalid";
-  };
+static int str_to_enum(const char* string, const char** names, unsigned count) {
+  for (int i = 0; i < count; ++i) if (strcmp(string, names[i]) == 0) return i;
+  return -1;
 };
+
+defenum_names(
+    Bridge::Connection::BridgeType,
+    BridgeType_names,
+    Bridge::Connection::bridgeTypeName,
+    Bridge::Connection::strToBridge,
+    "V1718", "V2718", "V3718", "A2719", "None"
+);
+
+defenum_names(
+    Bridge::Connection::ConetType,
+    ConetType_names,
+    Bridge::Connection::conetTypeName,
+    Bridge::Connection::strToConet,
+    "A2818", "A3818", "A4818", "A5818", "None"
+);
+
+#undef defenum_names
 
 const char* Bridge::InvalidConnection::what() const throw() {
   if (message.empty()) {

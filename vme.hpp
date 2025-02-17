@@ -15,20 +15,24 @@ class Bridge {
     // kind of devices, use a specialized constructor below or a derived class
     struct Connection {
       enum class BridgeType {
+        Invalid = -1,
         V1718,
         V2718,
         V3718,
         V4718,
         A2719,
         None
+        // XXX: when changing, remember to update BridgeType_names in vme.cpp
       };
 
       enum class ConetType {
+        Invalid = -1,
         A2818,
         A3818,
         A4818,
         A5818,
         None
+        // XXX: when changing, remember to update ConetType_names in vme.cpp
       };
 
       BridgeType  bridge;
@@ -43,6 +47,9 @@ class Bridge {
 
       static const char* bridgeTypeName(BridgeType);
       static const char* conetTypeName(ConetType);
+
+      static BridgeType strToBridge(const char*);
+      static ConetType  strToConet(const char*);
     };
 
     class InvalidConnection: public caen::Error {
