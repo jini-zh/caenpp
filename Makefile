@@ -13,7 +13,7 @@ CXXFLAGS ?= -O2 -pipe -march=native
 
 version = 0.0.0
 
-objects = caen $(digitizer) v792 v812 v1290 v1495 v6534
+objects = caen vme $(digitizer) v792 v812 v1290 v1495 v6534
 
 .PHONY: all distclean clean install uninstall
 
