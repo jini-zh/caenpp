@@ -2,7 +2,7 @@
 
 #include <bitset>
 
-#include "caen.hpp"
+#include "comm.hpp"
 
 namespace caen {
 

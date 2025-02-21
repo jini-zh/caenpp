@@ -9,7 +9,7 @@
 
 #include <getopt.h>
 
-#include "caen.hpp"
+#include "comm.hpp"
 
 static void usage(const char* argv0) {
   std::cout

@@ -4,7 +4,7 @@
 #include <limits>
 #include <string>
 
-#include "caen.hpp"
+#include "comm.hpp"
 
 namespace caen {
 

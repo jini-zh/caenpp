@@ -1,6 +1,6 @@
 #pragma once
 
-#include "caen.hpp"
+#include "comm.hpp"
 
 #include <CAENDigitizer.h>
 

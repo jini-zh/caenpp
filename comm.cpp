@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#include "caen.hpp"
+#include "comm.hpp"
 
 namespace caen {
 
