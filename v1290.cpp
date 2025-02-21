@@ -41,13 +41,12 @@ const float V1290::dead_times[4] = {
   100e-9
 };
 
-V1290::V1290(const Connection& connection): Device(connection) {
-  if (oui() != OUI || id() != 1290) throw WrongDevice(connection, "V1290");
-  version_ = static_cast<Version>(read16(0x4030));
+bool V1290::check() const {
+  return oui() == OUI && id() == 1290;
 };
 
-V1290::V1290(V1290&& device): Device(std::move(device)) {
-  version_ = device.version_;
+V1290::V1290(const Connection& connection): Device(connection) {
+  version_ = static_cast<Version>(read16(0x4030));
 };
 
 V1290::Resolution V1290::resolution() const {

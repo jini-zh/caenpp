@@ -8,8 +8,16 @@ class V1495: public Device {
   public:
     static const uint16_t buffer_size = 0x1000 / sizeof(uint32_t);
 
-    V1495(const Connection&);
+    V1495(const Connection& connection): Device(connection) {};
+
     V1495(V1495&& device): Device(std::move(device)) {};
+
+    V1495& operator=(V1495&& device) {
+      Device::operator=(std::move(device));
+      return *this;
+    };
+
+    const char* kind() const { return "V1495"; };
 
     uint32_t readout(uint32_t* buffer, unsigned size = buffer_size) const {
       return mblt_read(0, buffer, size);
@@ -90,6 +98,9 @@ class V1495: public Device {
     void reload() {
       write16(0x8016, 1);
     };
+
+  private:
+    bool check() const;
 };
 
 };

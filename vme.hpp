@@ -10,60 +10,6 @@ namespace caen {
 
 class Bridge {
   public:
-    // The purpose of Connection is to provide means for general handling of
-    // connections to bridges. If you want to hardcode connection to a specific
-    // kind of devices, use a specialized constructor below or a derived class
-    struct Connection {
-      enum class BridgeType {
-        Invalid = -1,
-        V1718,
-        V2718,
-        V3718,
-        V4718,
-        A2719,
-        None
-        // XXX: when changing, remember to update BridgeType_names in vme.cpp
-      };
-
-      enum class ConetType {
-        Invalid = -1,
-        A2818,
-        A3818,
-        A4818,
-        A5818,
-        None
-        // XXX: when changing, remember to update ConetType_names in vme.cpp
-      };
-
-      BridgeType  bridge;
-      ConetType   conet;
-      uint32_t    link;
-      std::string ip;
-      short       node;
-      bool        local;
-
-      const char* bridgeName() const { return bridgeTypeName(bridge); };
-      const char* conetName()  const { return conetTypeName(conet);   };
-
-      static const char* bridgeTypeName(BridgeType);
-      static const char* conetTypeName(ConetType);
-
-      static BridgeType strToBridge(const char*);
-      static ConetType  strToConet(const char*);
-    };
-
-    class InvalidConnection: public caen::Error {
-      public:
-        InvalidConnection(Connection connection): connection_(connection) {};
-
-        const char* what() const throw();
-        Connection connection() { return connection_; };
-
-      private:
-        Connection connection_;
-        mutable std::string message;
-    };
-
     // VME errors (with the error code)
     class Error: public caen::Error {
       public:
@@ -106,37 +52,6 @@ class Bridge {
 
     Bridge(const Connection&);
 
-    // Convenience constructors
-    Bridge(
-        Connection::BridgeType bridge,
-        Connection::ConetType  conet = Connection::ConetType::None,
-        uint32_t               link  = 0,
-        short                  node  = 0,
-        bool                   local = false
-    );
-
-    Bridge(
-        Connection::BridgeType bridge,
-        Connection::ConetType  conet,
-        const char*            ip,
-        short                  node = 0,
-        bool                   local = false
-    );
-
-    Bridge(
-        Connection::BridgeType bridge,
-        uint32_t               link,
-        short                  node = 0,
-        bool                   local = false
-    );
-
-    Bridge(
-        Connection::BridgeType bridge,
-        const char*            ip,
-        short                  node = 0,
-        bool                   local = false
-    );
-
     // thin wrapper over CAENVME_Init2
     Bridge(CVBoardTypes, const void* arg, short conet); 
 
@@ -149,12 +64,7 @@ class Bridge {
 
     virtual ~Bridge();
 
-    Bridge& operator=(Bridge&& bridge) {
-      handle = bridge.handle;
-      own = bridge.own;
-      bridge.own = false;
-      return *this;
-    };
+    Bridge& operator=(Bridge&& bridge);
 
     int32_t vme_handle() const { return handle; };
 
@@ -374,15 +284,6 @@ class Bridge {
 
   private:
     bool own;
-
-    Bridge(
-        Connection::BridgeType bridge,
-        Connection::ConetType  conet,
-        uint32_t               link,
-        const char*            ip,
-        short                  node,
-        bool                   local
-    );
 };
 
 };

@@ -6,20 +6,6 @@
 
 namespace caen {
 
-const std::array<Device::Connection::Type, 8>
-Device::Connection::types = {
-  {
-    { "usb",         "USB",               CAENComm_USB             },
-    { "optical",     "optical link",      CAENComm_OpticalLink     },
-    { "a4818-v2718", "USB A4818 - V2718", CAENComm_USB_A4818_V2718 },
-    { "a4818-v3718", "USB A4818 - V3718", CAENComm_USB_A4818_V3718 },
-    { "a4818-v4718", "USB A4818 - V4718", CAENComm_USB_A4818_V4718 },
-    { "a4818",       "USB A4818",         CAENComm_USB_A4818       },
-    { "eth-v4718",   "ETH V4718",         CAENComm_ETH_V4718       },
-    { "usb-v4718",   "USB V4718",         CAENComm_ETH_V4718       }
-  }
-};
-
 static const char* comm_strerror(CAENComm_ErrorCode code) {
   switch (code) {
     case CAENComm_Success:
@@ -55,24 +41,6 @@ static const char* comm_strerror(CAENComm_ErrorCode code) {
     default:
       return "unknown error";
   };
-};
-
-static const char* connection_type_pretty_name(CAENComm_ConnectionType link) {
-  for (auto& type : Device::Connection::types)
-    if (type.link == link)
-      return type.pretty_name;
-  return "unknown";
-};
-
-CAENComm_ConnectionType str_to_link(const char* string) {
-  for (auto& type : Device::Connection::types)
-    if (strcasecmp(type.name, string) == 0)
-      return type.link;
-  return static_cast<CAENComm_ConnectionType>(-1);
-};
-
-bool Device::Connection::is_ethernet() const {
-  return link == CAENComm_ETH_V4718;
 };
 
 Device::Error::~Error() throw() {
@@ -117,22 +85,17 @@ const char* Device::Error::what() const throw() {
 
 const char* Device::WrongDevice::what() const noexcept {
   if (message.empty()) {
-    std::stringstream ss;
-    ss
-      << "Device connected through "
-      << connection_type_pretty_name(connection_.link);
-    if (connection_.is_ethernet())
-      ss << ", IP address " << connection_.ip;
-    else {
-      if (connection_.arg)
-        ss << ", arg " << connection_.arg;
-      if (connection_.conet)
-        ss << ", conet node " << connection_.conet;
-      if (connection_.vme)
-        ss << ", VME address " << std::hex << connection_.vme;
+    try {
+      std::stringstream ss;
+      ss
+        << "Device connected through "
+        << connection_
+        << " is not a "
+        << expected_;
+      message = ss.str();
+    } catch (...) {
+      return "caen::Device::WrongDevice::what: error while composing message";
     };
-    ss << " is not a " << expected_;
-    message = ss.str();
   };
   return message.c_str();
 };
@@ -144,22 +107,75 @@ const char* Device::WrongDevice::what() const noexcept {
       throw Error(status); \
   } while (false)
 
+static CAENComm_ConnectionType commConnectionType(
+    const Connection& connection
+) {
+  if (!connection.ip.empty() && connection.link != 0)
+    throw InvalidConnection(connection);
+
+  if (connection.bridge == Connection::Bridge::V4718) {
+    if (connection.ip.empty())
+      return CAENComm_USB_V4718;
+    return CAENComm_ETH_V4718;
+  };
+
+  switch (connection.conet) {
+    case Connection::Conet::None:
+      return CAENComm_USB;
+    case Connection::Conet::Optical:
+      return CAENComm_OpticalLink;
+    case Connection::Conet::A4818:
+      return CAENComm_USB_A4818;
+  };
+
+  throw InvalidConnection(connection);
+};
+
 Device::Device(const Connection& connection) {
-  if (connection.is_ethernet())
-    COMM(OpenDevice2, connection.link, connection.ip.c_str(), 0, 0, &handle);
+  const void* arg;
+  if (connection.ip.empty())
+    arg = &connection.link;
   else
-    COMM(
-        OpenDevice2,
-        connection.link,
-        &connection.arg,
-        connection.conet,
-        connection.vme,
-        &handle
-    );
+    arg = connection.ip.c_str();
+  COMM(
+      OpenDevice2,
+      commConnectionType(connection),
+      arg,
+      connection.node,
+      static_cast<uint32_t>(connection.address) << 16,
+      &handle
+  );
+  own = true;
+
+  try {
+    if (!check()) throw WrongDevice(connection, kind());
+  } catch (...) {
+    CAENComm_CloseDevice(handle);
+    throw;
+  };
+};
+
+Device::Device(
+    CAENComm_ConnectionType link,
+    const void*             arg,
+    int                     node,
+    uint32_t                address
+): own(true) {
+  COMM(OpenDevice2, link, arg, node, address, &handle);
+};
+
+Device::Device(int handle, bool own): handle(handle), own(own) {};
+
+Device& Device::operator=(Device&& device) {
+  if (own) CAENComm_CloseDevice(handle);
+  handle = device.handle;
+  own    = device.own;
+  device.own = false;
+  return *this;
 };
 
 Device::~Device() {
-  if (handle >= 0) CAENComm_CloseDevice(handle);
+  if (own) CAENComm_CloseDevice(handle);
 }
 
 int Device::vme_handle() const {

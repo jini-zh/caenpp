@@ -10,10 +10,11 @@ libdir     := $(DESTDIR)$(libdir)
 includedir := $(DESTDIR)$(includedir)
 
 CXXFLAGS ?= -O2 -pipe -march=native
+CXXFLAGS += -std=c++17
 
 version = 0.0.0
 
-libobjects = comm vme $(digitizer) v792 v812 v1290 v1495 v6534
+libobjects = caen comm vme $(digitizer) v792 v812 v1290 v1495 v6534
 objects = $(libobjects) caen-rw
 
 .PHONY: all distclean clean install uninstall
@@ -27,10 +28,10 @@ caen-rw: caen-rw.o libcaen++.so
 	$(CXX) -o $@ $< -L . -lcaen++ -lCAENComm $(and $(digitizer),-lCAENDigitizer)
 
 caen-rw.o: caen-rw.cpp
-	$(CXX) -c $< -std=c++17 $(CXXFLAGS) -fPIC
+	$(CXX) -c $< $(CXXFLAGS) -fPIC
 
 %.o: %.cpp
-	$(CXX) -c $< -std=c++11 $(CXXFLAGS) -fPIC
+	$(CXX) -c $< $(CXXFLAGS) -fPIC
 
 %.d: %.cpp
 	$(CXX) -MM $< | sed 's,:, $@:,' > $@

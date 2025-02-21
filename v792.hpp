@@ -281,6 +281,23 @@ class V792: public Device {
     // XXX: I don't know the identifier of the V792N board version
     V792(const Connection&, Version);
 
+    V792(V792&& device):
+      Device(std::move(device)),
+      vme_handle_(device.vme_handle_),
+      vme_address_(device.vme_address_),
+      channel_step_(device.channel_step_)
+    {};
+
+    V792& operator=(V792&& device) {
+      Device::operator=(std::move(device));
+      vme_handle_  = device.vme_handle_;
+      vme_address_  = device.vme_address_;
+      channel_step_ = device.channel_step_;
+      return *this;
+    };
+
+    const char* kind() const { return "V792"; };
+
     uint16_t firmware_revision() const {
       return read16(0x1000);
     };
@@ -634,6 +651,7 @@ class V792: public Device {
     uint8_t  channel_step_;
 
     void init(const Connection&, Version);
+    bool check() const;
 };
 
 };

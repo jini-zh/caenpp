@@ -62,9 +62,16 @@ class Digitizer {
     Digitizer(
         CAEN_DGTZ_ConnectionType link, uint32_t arg, int conet, uint32_t vme
     );
-    Digitizer(const Device::Connection&);
+    Digitizer(const Connection&);
     Digitizer(Digitizer&&);
     ~Digitizer();
+
+    Digitizer& operator=(Digitizer&& digitizer) {
+      this->digitizer = digitizer.digitizer;
+      info_ = digitizer.info_;
+      digitizer.digitizer = -1;
+      return *this;
+    };
 
     int handle() const { return digitizer; };
     const CAEN_DGTZ_BoardInfo_t& info() const { return info_; };

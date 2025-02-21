@@ -6,72 +6,6 @@
 
 namespace caen {
 
-#define defenum_names(type, names, encode, decode, ...) \
-  static const char* names[] = { __VA_ARGS__ }; \
-  const char* encode(type value) { \
-    return enum_to_str( \
-        static_cast<int>(value), \
-        names, \
-        sizeof(names) / sizeof(*names) \
-    ); \
-  }; \
-  type decode(const char* string) { \
-    return static_cast<type>( \
-        str_to_enum(string, names, sizeof(names) / sizeof(*names)) \
-    ); \
-  }
-
-static const char* enum_to_str(int index, const char** names, unsigned count) {
-  if (index < 0 || index >= count) return nullptr;
-  return names[count];
-};
-
-static int str_to_enum(const char* string, const char** names, unsigned count) {
-  for (int i = 0; i < count; ++i) if (strcmp(string, names[i]) == 0) return i;
-  return -1;
-};
-
-defenum_names(
-    Bridge::Connection::BridgeType,
-    BridgeType_names,
-    Bridge::Connection::bridgeTypeName,
-    Bridge::Connection::strToBridge,
-    "V1718", "V2718", "V3718", "A2719", "None"
-);
-
-defenum_names(
-    Bridge::Connection::ConetType,
-    ConetType_names,
-    Bridge::Connection::conetTypeName,
-    Bridge::Connection::strToConet,
-    "A2818", "A3818", "A4818", "A5818", "None"
-);
-
-#undef defenum_names
-
-const char* Bridge::InvalidConnection::what() const throw() {
-  if (message.empty()) {
-    try {
-      std::stringstream ss;
-      ss
-        << "caen::Bridge: invalid connection parameters: "
-        << connection_.bridgeName()
-        << " via "
-        << connection_.conetName()
-        << ", local = " << (connection_.local ? "true" : "false");
-      if (connection_.ip.empty())
-        ss << ", link = " << connection_.link;
-      else
-        ss << ", ip = " << connection_.ip;
-      ss << ", node = " << connection_.node;
-      message = ss.str();
-    } catch (std::exception&) {
-      return "Bridge::InvalidConnection::what: error while printing connection parameters";
-    };
-  };
-  return message.c_str();
-};
-
 const char* Bridge::Error::what() const throw() {
   return CAENVME_DecodeError(code_);
 };
@@ -84,13 +18,13 @@ const char* Bridge::Error::what() const throw() {
   } while (false)
 
 static CVBoardTypes vmeConnectionType(
-    Bridge::Connection::BridgeType bridge,
-    Bridge::Connection::ConetType  conet,
+    Connection::Bridge bridge,
+    Connection::Conet  conet,
     bool local,
     bool ethernet
 ) {
-#define bt Bridge::Connection::BridgeType
-#define ct Bridge::Connection::ConetType
+#define bt Connection::Bridge
+#define ct Connection::Conet
   switch (bridge) {
     case bt::V1718:
       return cvV1718;
@@ -158,83 +92,33 @@ static CVBoardTypes vmeConnectionType(
 #undef bt
 };
 
-Bridge::Bridge(
-    Connection::BridgeType bridge,
-    Connection::ConetType  conet,
-    uint32_t               link,
-    const char*            ip,
-    short                  node,
-    bool                   local
-): own(true) {
-  CVBoardTypes type = vmeConnectionType(bridge, conet, local, ip);
-  if (type == cvInvalid)
-    throw InvalidConnection(
-        Connection {
-          .bridge = bridge,
-          .conet  = conet,
-          .link   = link,
-          .ip     = ip,
-          .node   = node,
-          .local  = local
-        }
-    );
-
-  const void* arg;
-  if (ip)
-    arg = &link;
-  else
-    arg = ip;
-
-  VME(Init2, type, arg, node, &handle);
-};
-
-Bridge::Bridge(const Connection& connection):
-  Bridge(
+Bridge::Bridge(const Connection& connection) {
+  CVBoardTypes type = vmeConnectionType(
       connection.bridge,
       connection.conet,
-      connection.link,
-      connection.ip.c_str(),
-      connection.node,
-      connection.local
-  )
-{};
-
-Bridge::Bridge(
-    Connection::BridgeType bridge,
-    Connection::ConetType  conet,
-    uint32_t               link,
-    short                  node,
-    bool                   local
-): Bridge(bridge, conet, link, nullptr, node, local)
-{};
-
-Bridge::Bridge(
-    Connection::BridgeType bridge,
-    Connection::ConetType  conet,
-    const char*            ip,
-    short                  node,
-    bool                   local
-): Bridge(bridge, conet, 0, ip, node, local)
-{};
-
-Bridge::Bridge(
-    Connection::BridgeType bridge,
-    uint32_t               link,
-    short                  node,
-    bool                   local
-): Bridge(bridge, Connection::ConetType::None, link, nullptr, node, local)
-{};
-
-Bridge::Bridge(
-    Connection::BridgeType bridge,
-    const char*            ip,
-    short                  node,
-    bool                   local
-): Bridge(bridge, Connection::ConetType::None, 0, ip, node, local)
-{};
+      connection.local,
+      !connection.ip.empty()
+  );
+  if (type == cvInvalid)
+    throw InvalidConnection(connection);
+  const void* arg;
+  if (connection.ip.empty())
+    arg = &connection.link;
+  else
+    arg = connection.ip.c_str();
+  VME(Init2, type, arg, connection.node, &handle);
+};
 
 Bridge::Bridge(CVBoardTypes type, const void* arg, short conet): own(true) {
   VME(Init2, type, arg, conet, &handle);
+};
+
+Bridge& Bridge::operator=(Bridge&& bridge) {
+  if (own) CAENVME_End(handle);
+  handle = bridge.handle;
+  own    = bridge.own;
+  bridge.own = false;
+  return *this;
 };
 
 Bridge::~Bridge() {

@@ -1,5 +1,7 @@
+#include <functional>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -10,17 +12,22 @@
 #include <getopt.h>
 
 #include "comm.hpp"
+#include "vme.hpp"
 
 static void usage(const char* argv0) {
   std::cout
     << "This program reads and writes registers of a CAEN VME module\n"
        "Usage: " << argv0 << " [options] < registers\n"
        "Allowed options:\n"
-       "  --link  or -l <string>:      CAEN connection link type. Pass `list' to see supported links\n"
-       "  --arg   or -a <arg>:         CAEN connection argument. USB device number for USB links, A4818 PID for A4818 links, IP address for Ethernet links\n"
-       "  --conet or -c <integer>:     CAEN Conet connection daisy chain number\n"
-       "  --vme   or -v <hexadecimal>: 16 most significant bits of the VME address (the value set by the rotary switches on the board)\n"
-       "  --access-mode or -d <16|32>: default registers bits size. 16 bits if not specified\n"
+       "  --address or -a <hexadecimal>: 16 most significant bits of the VME address (the value set by the rotary switches on the board). Can also be set through CAENPP_ADDRESS environment variable.\n"
+       "  --bridge or -b <string>:      CAEN bridge name when connecting to a bridge. Pass `list' to see supported bridges. Can also be set through CAENPP_BRIDGE environment variable\n"
+       "  --conet or -c <string>:       CAEN Conet adapter name when connecting through an adapter. Pass `list' to see supported conets. Can also be set through CAENPP_CONET environment variable\n"
+       "  --help or -h:                 print this message\n"
+       "  --ip or -i <string>:          IP address when connecting through Ethernet. Can also be set through CAENPP_IP environment variable\n"
+       "  --link or -l <uint32>:        USB device number when connecting through USB or Conet PID when connecting through Conet. Can also be set through CAENPP_LINK environment variable\n"
+       "  --local or -L:                connect to bridge local registers (experts only)\n"
+       "  --node or -n <uint16_t>:      number of the device in the daisy chain. Can also be set through CAENPP_NODE environment variable\n"
+       "  --access-mode or -d <16|32>:  default registers bits size. 16 bits if not specified. Can also be set through CAENPP_ACCESS_MODE environment variable\n"
        "Each input line should have the following syntax:\n"
        "  <access-mode>? <address> <value>?\n"
        "Where\n"
@@ -46,12 +53,6 @@ inline void fail(Args... args) __attribute__((noreturn));
 template <typename... Args>
 inline void fail(Args... args) {
   throw std::runtime_error(concat(args...));
-};
-
-static CAENComm_ConnectionType str_to_link(const char* string) {
-  auto result = caen::str_to_link(string);
-  if (result != -1) return result;
-  fail("invalid connection type: ", string);
 };
 
 static unsigned long str_to_ulong(const char* string, int base) {
@@ -89,9 +90,9 @@ static uint16_t parse_address(const std::string& line, size_t& pos) {
   while (pos < line.size() && line[pos] == '0') ++pos;
 
   uint16_t address = 0;
-  for (int n = 0; ; ++n) {
+  for (int n = 0; pos < line.size(); ++n) {
     int digit;
-    char c = line[pos];
+    char c = line[pos++];
     if (c >= '0' && c <= '9')
       digit = c - '0';
     else if (c >= 'a' && c <= 'f')
@@ -105,7 +106,6 @@ static uint16_t parse_address(const std::string& line, size_t& pos) {
     if (n >= 4)
       fail(line, ": address is too large");
     address = address << 4 | digit;
-    if (++pos >= line.size()) break;
   };
 
   return address;
@@ -166,95 +166,202 @@ fail_:
   fail(line, ": invalid value");
 };
 
+static void list_bridges() {
+  for (int bridge = static_cast<int>(caen::Connection::Bridge::None);
+       ++bridge != static_cast<int>(caen::Connection::Bridge::Invalid);)
+    std::cout
+      << caen::Connection::bridgeName(
+          static_cast<caen::Connection::Bridge>(bridge)
+         )
+      << '\n';
+};
+
+static void list_conets() {
+  for (int conet = static_cast<int>(caen::Connection::Conet::None);
+       ++conet != static_cast<int>(caen::Connection::Conet::Invalid);)
+    std::cout
+      << caen::Connection::conetName(
+          static_cast<caen::Connection::Conet>(conet)
+         )
+      << '\n';
+};
+
+static void connect(
+    const caen::Connection& connection,
+    bool wide,
+    std::function<uint32_t (uint16_t)>& read,
+    std::function<void (uint16_t, uint32_t)>& write
+) {
+  if (connection.address
+      || connection.bridge == caen::Connection::Bridge::None
+      && connection.conet != caen::Connection::Conet::None)
+  {
+    auto device = std::make_shared<caen::Device>(connection);
+    if (wide) {
+      read = [device](uint16_t address) -> uint32_t {
+        return device->read32(address);
+      };
+      write = [device](uint16_t address, uint32_t value) {
+        device->write32(address, value);
+      };
+    } else {
+      read = [device](uint16_t address) -> uint32_t {
+        return device->read16(address);
+      };
+      write = [device](uint16_t address, uint32_t value) {
+        if (value > std::numeric_limits<uint16_t>().max())
+          fail("value is too big for 16 bits: ", value);
+        device->write16(address, value);
+      };
+    };
+  } else {
+    auto bridge = std::make_shared<caen::Bridge>(connection);
+    read = [bridge](uint16_t address) -> uint32_t {
+      if (address > std::numeric_limits<uint8_t>().max())
+        fail("address is too big to 8 bits: ", address);
+      return bridge->readRegister(address);
+    };
+    write = [bridge](uint16_t address, uint32_t value) {
+      if (address > std::numeric_limits<uint8_t>().max())
+        fail("address is too big to 8 bits: ", address);
+      bridge->writeRegister(address, value);
+    };
+  };
+};
+
+struct Options {
+  caen::Connection connection;
+  bool wide;
+};
+
+static Options parse_options(int argc, char** argv) {
+  const char* bridge      = nullptr;
+  const char* conet       = nullptr;
+  const char* link        = nullptr;
+  const char* ip          = nullptr;
+  const char* node        = nullptr;
+  bool local              = false;
+  const char* address     = nullptr;
+  const char* access_mode = nullptr;
+  while (true) {
+    static option options[] = {
+      { "address",     required_argument, nullptr, 'a' },
+      { "bridge",      required_argument, nullptr, 'b' },
+      { "conet",       required_argument, nullptr, 'c' },
+      { "help",        no_argument,       nullptr, 'h' },
+      { "ip",          required_argument, nullptr, 'i' },
+      { "link",        required_argument, nullptr, 'l' },
+      { "local",       no_argument,       nullptr, 'L' },
+      { "node",        required_argument, nullptr, 'n' },
+      { "access-mode", required_argument, nullptr, 'd' },
+    };
+
+    int c = getopt_long(argc, argv, "a:b:c:hi:l:Ln:d:", options, nullptr);
+    if (c == -1) break;
+
+    switch (c) {
+      case 'a':
+        address = optarg;
+        break;
+      case 'b':
+        bridge = optarg;
+        break;
+      case 'c':
+        conet = optarg;
+        break;
+      case 'd':
+        access_mode = optarg;
+        break;
+      case 'h':
+        usage(argv[0]);
+        exit(0);
+      case 'i':
+        ip = optarg;
+        break;
+      case 'l':
+        link = optarg;
+        break;
+      case 'L':
+        local = true;
+        break;
+      case 'n':
+        node = optarg;
+        break;
+      default:
+        exit(1);
+    };
+  };
+
+  if (bridge && strcmp(bridge, "list") == 0) {
+    list_bridges();
+    exit(0);
+  };
+
+  if (conet && strcmp(conet, "list") == 0) {
+    list_conets();
+    exit(0);
+  };
+
+  if (!bridge)      bridge      = getenv("CAENPP_BRIDGE");
+  if (!conet)       conet       = getenv("CAENPP_CONET");
+  if (!ip)          ip          = getenv("CAENPP_IP");
+  if (!link)        link        = getenv("CAENPP_LINK");
+  if (!node)        node        = getenv("CAENPP_NODE");
+  if (!address)     address     = getenv("CAENPP_ADDRESS");
+  if (!access_mode) access_mode = getenv("CAENPP_ACCESS_MODE");
+
+  caen::Connection connection;
+
+  if (bridge) {
+    connection.bridge = caen::Connection::strToBridge(bridge);
+    if (connection.bridge == caen::Connection::Bridge::Invalid) {
+      std::cerr << argv[0] << ": invalid bridge: " << bridge << '\n';
+      exit(1);
+    };
+  };
+
+  if (conet) {
+    connection.conet = caen::Connection::strToConet(conet);
+    if (connection.conet == caen::Connection::Conet::Invalid) {
+      std::cerr << argv[0] << ": invalid conet: " << conet << '\n';
+      exit(1);
+    };
+  };
+
+  if (link)    connection.link    = str_to_uint32(link);
+  if (ip)      connection.ip      = ip;
+  if (node)    connection.node    = str_to_uint16(node);
+  connection.local = local;
+  if (address) connection.address = str_to_uint16(address);
+
+  bool wide = false;
+  if (access_mode)
+    switch (str_to_uint8(access_mode)) {
+      case 16:
+        break;
+      case 32:
+        wide = true;
+        break;
+      default:
+        std::cerr
+          << argv[0]
+          << ": invalid access mode: "
+          << access_mode
+          << ", expected 16 or 32\n";
+        exit(1);
+    };
+
+  return { std::move(connection), wide };
+};
+
 int main(int argc, char** argv) {
   try {
-    const char* link        = nullptr;
-    const char* arg         = nullptr;
-    const char* conet       = nullptr;
-    const char* vme         = nullptr;
-    const char* access_mode = nullptr;
-    bool        read        = false;
-    bool        write       = false;
-    while (true) {
-      static option options[] = {
-        { "arg",         required_argument, nullptr, 'a' },
-        { "conet",       required_argument, nullptr, 'c' },
-        { "help",        no_argument,       nullptr, 'h' },
-        { "link",        required_argument, nullptr, 'l' },
-        { "access-mode", required_argument, nullptr, 'd' },
-        { "vme",         required_argument, nullptr, 'v' },
-      };
+    auto options = parse_options(argc, argv);
 
-      int c = getopt_long(argc, argv, "a:c:d:hl:v:", options, nullptr);
-      if (c == -1) break;
+    std::function<uint32_t (uint16_t)>       read;
+    std::function<void (uint16_t, uint32_t)> write;
+    connect(options.connection, options.wide, read, write);
 
-      switch (c) {
-        case 'a':
-          arg = optarg;
-          break;
-        case 'c':
-          conet = optarg;
-          break;
-        case 'd':
-          access_mode = optarg;
-          break;
-        case 'h':
-          usage(argv[0]);
-          return 0;
-        case 'l':
-          link = optarg;
-          break;
-        case 'v':
-          vme = optarg;
-          break;
-        default:
-          return 1;
-      };
-    };
-
-    if (link && std::strcmp(link, "list") == 0) {
-      for (auto& type : caen::Device::Connection::types)
-        std::cout << type.name << '\n';
-      return 0;
-    };
-
-    if (!link)  link  = getenv("CAENPP_LINK");
-    if (!arg)   arg   = getenv("CAENPP_ARG");
-    if (!conet) conet = getenv("CAENPP_CONET");
-    if (!vme)   vme   = getenv("CAENPP_VME");
-    if (!access_mode) access_mode = getenv("CAENPP_ACCESS_MODE");
-
-    caen::Device::Connection connection;
-    connection.link = link ? str_to_link(link) : CAENComm_USB;
-    if (connection.is_ethernet())
-      connection.ip = arg;
-    else
-      connection.arg = arg ? str_to_uint32(arg) : 0;
-    connection.conet = conet ? str_to_uint32(conet)   : 0;
-    if (vme) {
-      connection.vme = str_to_uint16(vme, 16);
-      connection.vme <<= 16;
-    } else
-      connection.vme = 0;
-
-    bool wide = false;
-    if (access_mode)
-      switch (str_to_uint8(access_mode)) {
-        case 16:
-          break;
-        case 32:
-          wide = true;
-          break;
-        default:
-          std::cerr
-            << argv[0]
-            << ": invalid access mode: "
-            << access_mode
-            << ", expected 16 or 32\n";
-          return 1;
-      };
-
-    caen::Device device(connection);
     std::string line;
     while (true) {
       std::getline(std::cin, line);
@@ -264,7 +371,7 @@ int main(int argc, char** argv) {
         skip_whitespace(line, pos);
         if (pos >= line.size()) continue;
 
-        bool w;
+        bool w = options.wide;
         switch (line[pos]) {
           case 'a':
             w = false;
@@ -274,8 +381,6 @@ int main(int argc, char** argv) {
             w = true;
             skip_whitespace(line, ++pos);
             break;
-          default:
-            w = wide;
         };
 
         uint16_t address = parse_address(line, pos);
@@ -283,23 +388,14 @@ int main(int argc, char** argv) {
         if (pos < line.size()) {
           size_t value_pos = pos;
           uint32_t value = parse_value(line, pos);
-          if (w)
-            device.write32(address, value);
-          else if (value < std::numeric_limits<uint16_t>().max())
-            device.write16(address, value);
-          else
-            fail(line, ": value is too large for 16 bits");
-        } else if (w)
+          write(address, value);
+        } else
           printf(
-              "%1$04x %2$08x %2$010u %2$032b\n",
+              w
+              ? "%1$04x %2$08x %2$010u %2$032b\n"
+              : "%1$04x %2$04x %2$05u %2$016b\n",
               address,
-              device.read32(address)
-          );
-        else
-          printf(
-              "%1$04x %2$04x %2$05u %2$016b\n",
-              address,
-              device.read16(address)
+              read(address)
           );
       } catch (std::exception& e) {
         std::cerr << argv[0] << ": " << e.what() << '\n';

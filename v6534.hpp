@@ -22,7 +22,16 @@ class V6534: public Device {
         std::string message;
     };
 
-    V6534(const Connection& connection);
+    V6534(const Connection& connection): Device(connection) {};
+    
+    V6534(V6534&& device): Device(std::move(device)) {};
+
+    V6534& operator=(V6534&& device) {
+      Device::operator=(std::move(device));
+      return *this;
+    };
+
+    const char* kind() const { return "V6534"; };
 
     // Board maximum allowed voltage, V
     uint16_t vmax() const { return read16(0x0050); };
@@ -253,6 +262,8 @@ class V6534: public Device {
     };
 
     std::string read_string(uint16_t address, uint16_t size) const;
+
+    bool check() const;
 };
 
 };

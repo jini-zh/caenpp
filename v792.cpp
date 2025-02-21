@@ -7,20 +7,18 @@
 namespace caen {
 
 V792::V792(const Connection& connection): Device(connection) {
-  if (oui() != OUI || id() != 792) throw WrongDevice(connection, "V792");
   // Known versions: 0x11 (V792AA), 0x13 (V792AC), 0xE1 (V792NA), 0xE3 (V792NC)
   init(connection, version() & 0xF0 == 0xE0 ? V792N : V792A);
-};
-
-V792::V792(const Connection& connection, Version version): Device(connection) {
-  if (oui() != OUI || id() != 792) throw WrongDevice(connection, "V792");
-  init(connection, version);
 };
 
 void V792::init(const Connection& connection, Version version) {
   channel_step_ = version == V792A ? 2 : 4;
   vme_handle_   = vme_handle();
-  vme_address_  = connection.vme;
+  vme_address_  = connection.address;
+};
+
+bool V792::check() const {
+  return oui() == OUI && id() == 792;
 };
 
 float V792::fast_clear_window() const {

@@ -9,8 +9,15 @@ namespace caen {
 class V812: public Device {
   public:
 
-    V812(const Connection&);
+    V812(const Connection& connection): Device(connection) {};
     V812(V812&& device): Device(std::move(device)) {};
+
+    V812& operator=(V812&& device) {
+      Device::operator=(std::move(device));
+      return *this;
+    };
+
+    const char* kind() const { return "V812"; };
 
     // -1 to -255 mV, in volts
     void set_threshold(uint8_t channel, float voltage);
@@ -69,6 +76,9 @@ class V812: public Device {
     uint16_t constant() const {
       return read16(0xFA);
     };
+
+  private:
+    bool check() const;
 };
 
 };

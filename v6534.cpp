@@ -4,10 +4,9 @@
 
 namespace caen {
 
-V6534::V6534(const Connection& connection): Device(connection) {
+bool V6534::check() const {
   std::string model = this->model();
-  if (strncmp(model.c_str(), "V6534", 5) != 0)
-    throw WrongDevice(connection, "V6534");
+  return strncmp(model.c_str(), "V6534", 5) == 0;
 };
 
 uint16_t V6534::read_channel(uint8_t channel, uint8_t offset) const {

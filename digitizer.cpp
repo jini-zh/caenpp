@@ -220,35 +220,42 @@ Digitizer::Digitizer(
   };
 };
 
-static CAEN_DGTZ_ConnectionType comm_to_dgtz(CAENComm_ConnectionType type) {
-  switch (type) {
-#define def(name) \
-    case CAENComm_ ## name: \
-      return CAEN_DGTZ_ ## name
-    def(USB);
-    def(OpticalLink);
-    def(USB_A4818_V2718);
-    def(USB_A4818_V3718);
-    def(USB_A4818_V4718);
-    def(USB_A4818);
-    def(ETH_V4718);
-    def(USB_V4718);
-#undef def
-    default:
-      std::stringstream ss;
-      ss << "Unknown CAENComm_ConnectionType: " << type;
-      throw std::logic_error(ss.str());
+static CAEN_DGTZ_ConnectionType dgtzConnectionType(
+    const Connection& connection
+) {
+  if (!connection.ip.empty() && connection.link != 0)
+    throw InvalidConnection(connection);
+
+  if (connection.bridge == Connection::Bridge::V4718) {
+    if (connection.ip.empty())
+      return CAEN_DGTZ_USB_V4718;
+    return CAEN_DGTZ_ETH_V4718;
   };
+
+  switch (connection.conet) {
+    case Connection::Conet::None:
+      return CAEN_DGTZ_USB;
+    case Connection::Conet::Optical:
+      return CAEN_DGTZ_OpticalLink;
+    case Connection::Conet::A4818:
+      return CAEN_DGTZ_USB_A4818;
+  };
+
+  throw InvalidConnection(connection);
 };
 
-Digitizer::Digitizer(const Device::Connection& connection) {
-  uint32_t arg = connection.arg;
+Digitizer::Digitizer(const Connection& connection) {
+  const void* arg;
+  if (connection.ip.empty())
+    arg = &connection.link;
+  else
+    arg = connection.ip.c_str();
   DGTZ(
       OpenDigitizer2,
-      comm_to_dgtz(connection.link),
-      &arg,
-      connection.conet,
-      connection.vme,
+      dgtzConnectionType(connection),
+      const_cast<void*>(arg),
+      connection.node,
+      connection.address,
       &digitizer
   );
   try {

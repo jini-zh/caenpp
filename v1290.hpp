@@ -472,7 +472,18 @@ class V1290: public Device {
     static const float dead_times[4];
 
     V1290(const Connection& connection);
-    V1290(V1290&& device);
+
+    V1290(V1290&& device):
+      Device(std::move(device)), version_(device.version_)
+    {};
+
+    V1290& operator=(V1290&& device) {
+      Device::operator=(std::move(device));
+      version_ = device.version_;
+      return *this;
+    };
+
+    const char* kind() const { return "V1290"; };
 
     uint16_t rom_checksum() const {
       return read16(0x4000);
@@ -1074,6 +1085,8 @@ class V1290: public Device {
       micro_write(opcode);
       micro_write(seconds_to_cycles(seconds));
     };
+
+    bool check() const;
 };
 
 };

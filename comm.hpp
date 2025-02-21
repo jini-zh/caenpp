@@ -189,24 +189,6 @@ class Buffer {
 
 class Device {
   public:
-    struct Connection {
-      struct Type {
-        const char* name;
-        const char* pretty_name;
-        CAENComm_ConnectionType link;
-      };
-
-      static const std::array<Type, 8> types;
-
-      CAENComm_ConnectionType link;
-      uint32_t                arg;
-      uint32_t                conet;
-      uint32_t                vme;
-      std::string             ip;
-
-      bool is_ethernet() const;
-    };
-
     // CAEN device errors (with the error code)
     class Error: public caen::Error {
       public:
@@ -243,11 +225,21 @@ class Device {
 
     Device(const Connection& connection);
 
-    Device(Device&& device): handle(device.handle) {
-      device.handle = -1;
+    Device(Device&& device): handle(device.handle), own(device.own) {
+      device.own = false;
     };
 
+    // Thin wrapper over CAENComm_OpenDevice2
+    Device(CAENComm_ConnectionType, const void* arg, int node, uint32_t address);
+    // in case you already have a handle
+    Device(int handle, bool own);
+
     virtual ~Device();
+
+    Device& operator=(Device&& device);
+
+    // Device name, e.g., "V1730"
+    virtual const char* kind() const { return "Device"; };
 
     int comm_handle() const { return handle; };
     int vme_handle()  const;
@@ -283,6 +275,12 @@ class Device {
         unsigned nwords /* must be 4 or less */,
         uint32_t step
     ) const;
+
+    // have we connected to the device we expected?
+    virtual bool check() const { return true; }; 
+
+  private:
+    bool own = false;
 };
 
 CAENComm_ConnectionType str_to_link(const char*); // returns -1 on failure
