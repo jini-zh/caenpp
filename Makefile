@@ -13,7 +13,8 @@ CXXFLAGS ?= -O2 -pipe -march=native
 
 version = 0.0.0
 
-objects = caen vme $(digitizer) v792 v812 v1290 v1495 v6534
+libobjects = comm vme $(digitizer) v792 v812 v1290 v1495 v6534
+objects = $(libobjects) caen-rw
 
 .PHONY: all distclean clean install uninstall
 
@@ -25,8 +26,14 @@ libcaen++.so: $(objects:=.o)
 caen-rw: caen-rw.o libcaen++.so
 	$(CXX) -o $@ $< -L . -lcaen++ -lCAENComm $(and $(digitizer),-lCAENDigitizer)
 
-%.o: %.cpp %.hpp caen.hpp
+caen-rw.o: caen-rw.cpp
+	$(CXX) -c $< -std=c++17 $(CXXFLAGS) -fPIC
+
+%.o: %.cpp
 	$(CXX) -c $< -std=c++11 $(CXXFLAGS) -fPIC
+
+%.d: %.cpp
+	$(CXX) -MM $< | sed 's,:, $@:,' > $@
 
 install: libcaen++.so caen-rw
 	install -d $(libdir)
@@ -34,22 +41,27 @@ install: libcaen++.so caen-rw
 	ln -sf libcaen++.so.$(version) $(libdir)/libcaen++.so
 	-ldconfig $(libdir)
 	install -d $(includedir)/caen++
-	install -m 644 $(objects:=.hpp) $(includedir)/caen++
+	install -m 644 $(libobjects:=.hpp) $(includedir)/caen++
 	install -d $(bindir)
 	install -m 755 caen-rw $(bindir)/caen-rw
 
 uninstall:
 	-rm -v $(libdir)/libcaen++.so $(libdir)/libcaen++.so.$(version)
 	-rmdir -v --ignore-fail-on-non-empty $(libdir)/
-	-rm -v $(addprefix $(includedir)/caen++/,$(objects:=.hpp))
+	-rm -v $(addprefix $(includedir)/caen++/,$(libobjects:=.hpp))
 	-rmdir -v --ignore-fail-on-non-empty $(includedir)/caen++
 	-rmdir -v --ignore-fail-on-non-empty $(includedir)
 	-rm -v $(bindir)/caen-rw
 	-rmdir -v --ignore-fail-on-non-empty $(bindir)/
 
 clean:
-	rm -f $(objects:=.o) libcaen++.so
-	rm -f caen-rw.o caen-rw
+	rm -f $(objects:=.o) $(objects:=.d) libcaen++.so caen-rw
 
 distclean: clean
 	rm -f config.mak
+
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),distclean)
+include $(objects:=.d) caen-rw.d
+endif
+endif

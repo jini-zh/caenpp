@@ -1,5 +1,7 @@
 .*.sw?
 *.o
 *.so
+*.d
 config.mak
 config.log
+caen-rw
