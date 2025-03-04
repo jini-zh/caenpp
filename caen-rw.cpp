@@ -1,4 +1,5 @@
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -355,6 +356,27 @@ static Options parse_options(int argc, char** argv) {
   return { std::move(connection), wide };
 };
 
+void print(
+    uint16_t address,
+    uint32_t value,
+    int hex_width,
+    int dec_width,
+    int bin_width
+) {
+  std::cout
+    << std::hex << std::setw(4) << address
+    << ' ' << std::setw(hex_width) << value
+    << ' ' << std::setw(dec_width) << std::dec << value
+    << ' ';
+
+  char buf[bin_width + 1];
+  buf[bin_width] = 0;
+  int n = bin_width;
+  for (; value; value >>= 1) buf[--n] = '0' + (value & 1);
+  while (n > 0) buf[--n] = '0';
+  std::cout << buf << '\n';
+};
+
 int main(int argc, char** argv) {
   try {
     auto options = parse_options(argc, argv);
@@ -365,6 +387,9 @@ int main(int argc, char** argv) {
 
     bool terminal = isatty(0);
 
+    std::cout.fill('0');
+
+    caen::Device device(options.connection);
     std::string line;
     while (true) {
       if (terminal) std::cout << "> ";
@@ -396,14 +421,13 @@ int main(int argc, char** argv) {
           size_t value_pos = pos;
           uint32_t value = parse_value(line, pos);
           write(address, value);
-        } else
-          printf(
-              w
-              ? "%1$04x %2$08x %2$010u %2$032b\n"
-              : "%1$04x %2$04x %2$05u %2$016b\n",
-              address,
-              read(address)
-          );
+        } else {
+          uint32_t value = read(address);
+          if (w)
+            print(address, value, 8, 10, 32);
+          else
+            print(address, value, 4, 5, 16);
+        };
       } catch (std::exception& e) {
         std::cerr << argv[0] << ": " << e.what() << '\n';
       };
