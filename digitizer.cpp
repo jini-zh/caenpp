@@ -281,7 +281,7 @@ void Digitizer::writeRegister(uint32_t address, uint32_t data) {
 };
 
 uint32_t Digitizer::readRegister(uint32_t address, uint8_t start, uint8_t end) const {
-  return readRegister(address) & ((1 << end + 1) - 1) >> start;
+  return (readRegister(address) & ((1 << end + 1) - 1)) >> start;
 };
 
 void Digitizer::writeRegister(
