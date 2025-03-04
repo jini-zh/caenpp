@@ -10,6 +10,7 @@
 #include <cstring>
 
 #include <getopt.h>
+#include <unistd.h>
 
 #include "comm.hpp"
 #include "vme.hpp"
@@ -362,10 +363,16 @@ int main(int argc, char** argv) {
     std::function<void (uint16_t, uint32_t)> write;
     connect(options.connection, options.wide, read, write);
 
+    bool terminal = isatty(0);
+
     std::string line;
     while (true) {
+      if (terminal) std::cout << "> ";
       std::getline(std::cin, line);
-      if (!std::cin) return 0;
+      if (!std::cin) {
+        if (terminal) std::cout << '\n';
+        return 0;
+      };
       try {
         size_t pos = 0;
         skip_whitespace(line, pos);
