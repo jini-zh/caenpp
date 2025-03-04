@@ -11,19 +11,25 @@ Allowed options:
                         [PREFIX]
   --libdir=DIR          object code libraries [EPREFIX/lib]
   --includedir=DIR      C++ header files [PREFIX/include]
+  --without-digitizer   disable support for CAENDigitizer library
 END
 }
+
+if [[ -z $CXX ]]; then
+  CXX=g++
+fi
+
+echo "$0 $*" > config.log
+exec > >(tee -a config.log)
 
 prefix=/usr/local
 exec_prefix=
 bindir=
 libdir=
 includedir=
-digitizer=digitizer
+digitizer=
 
-argv=`(getopt -o '' -l 'help,prefix:,exec-prefix:,libdir:,includedir:,without-digitizer' -- "$@")` || exit $?
-echo creating config.log
-echo "$0 $*" > config.log
+argv=`(getopt -o '' -l 'help,prefix:,exec-prefix:,libdir:,includedir:,without-digitizer,with-digitizer' -- "$@")` || exit $?
 eval "set -- ${argv[*]}"
 while [[ $1 != -- ]]; do
   case $1 in
@@ -33,7 +39,8 @@ while [[ $1 != -- ]]; do
     --bindir)            bindir="$2"       shift 2;;
     --libdir)            libdir="$2";      shift 2;;
     --includedir)        includedir="$2";  shift 2;;
-    --without-digitizer) digitizer=;       shift;;
+    --without-digitizer) digitizer=0;      shift;;
+    --with-digitizer)    digitizer=1;      shift;;
   esac
 done
 
@@ -53,7 +60,28 @@ if [[ -z "$includedir" ]]; then
   includedir="$prefix/include"
 fi
 
-echo creating config.mak
+if [[ -z $digitizer ]]; then
+  echo -n 'Checking for libCAENDigitizer... '
+  if $CXX -x c++ -Wl,--no-as-needed -lCAENDigitizer - <<END &> /dev/null; then
+#include <CAENDigitizer.h>
+int main() {}
+END
+    echo found
+    digitizer=1
+  else
+    echo not found
+    digitizer=0
+  fi
+  echo
+fi
+
+if ((digitizer)); then
+  digitizer=digitizer
+else
+  digitizer=
+fi
+
+echo Creating config.mak
 cat > config.mak <<END
 prefix      := $prefix
 exec_prefix := $exec_prefix
@@ -62,3 +90,6 @@ libdir      := $libdir
 includedir  := $includedir
 digitizer   := $digitizer
 END
+
+exec >&-
+wait
