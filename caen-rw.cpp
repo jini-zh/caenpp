@@ -364,9 +364,9 @@ void print(
     int bin_width
 ) {
   std::cout
-    << std::hex << std::setw(4) << address
+    << std::setfill('0') << std::hex << std::setw(4) << address
     << ' ' << std::setw(hex_width) << value
-    << ' ' << std::setw(dec_width) << std::dec << value
+    << ' ' << std::setfill(' ') << std::setw(dec_width) << std::dec << value
     << ' ';
 
   char buf[bin_width + 1];
@@ -386,8 +386,6 @@ int main(int argc, char** argv) {
     connect(options.connection, options.wide, read, write);
 
     bool terminal = isatty(0);
-
-    std::cout.fill('0');
 
     caen::Device device(options.connection);
     std::string line;
