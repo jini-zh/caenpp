@@ -1,13 +1,16 @@
-prefix      := /usr/local
-exec_prefix := $(prefix)
-bindir	    := $(exec_prefix)/bin
-libdir 	    := $(exec_prefix)/lib
-includedir  := $(prefix)/include
+prefix       := /usr/local
+exec_prefix  := $(prefix)
+bindir       := $(exec_prefix)/bin
+libdir       := $(exec_prefix)/lib
+includedir   := $(prefix)/include
+pkgconfigdir := $(libdir)/pkgconfig
 
 -include config.mak
 
-libdir     := $(DESTDIR)$(libdir)
-includedir := $(DESTDIR)$(includedir)
+bindir       := $(DESTDIR)$(libdir)
+libdir       := $(DESTDIR)$(libdir)
+includedir   := $(DESTDIR)$(includedir)
+pkgconfigdir := $(DESTDIR)$(pkgconfigdir)
 
 CXXFLAGS ?= -O2 -pipe -march=native
 CXXFLAGS += -std=c++17
@@ -41,6 +44,8 @@ install: libcaen++.so caen-rw
 	install -m 755 libcaen++.so $(libdir)/libcaen++.so.$(version)
 	ln -sf libcaen++.so.$(version) $(libdir)/libcaen++.so
 	-ldconfig $(libdir)
+	install -d $(pkgconfigdir)
+	install caen++.pc $(pkgconfigdir)
 	install -d $(includedir)/caen++
 	install -m 644 $(libobjects:=.hpp) $(includedir)/caen++
 	install -d $(bindir)
@@ -59,7 +64,7 @@ clean:
 	rm -f $(objects:=.o) $(objects:=.d) libcaen++.so caen-rw
 
 distclean: clean
-	rm -f config.mak
+	rm -f config.mak caen++.pc
 
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),distclean)

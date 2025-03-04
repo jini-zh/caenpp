@@ -11,6 +11,7 @@ Allowed options:
                         [PREFIX]
   --libdir=DIR          object code libraries [EPREFIX/lib]
   --includedir=DIR      C++ header files [PREFIX/include]
+  --pkgconfigdir=DIR    pkg-config file [LIBDIR/pkgconfig]
   --without-digitizer   disable support for CAENDigitizer library
 END
 }
@@ -27,9 +28,10 @@ exec_prefix=
 bindir=
 libdir=
 includedir=
+pkgconfigdir=
 digitizer=
 
-argv=`(getopt -o '' -l 'help,prefix:,exec-prefix:,libdir:,includedir:,without-digitizer,with-digitizer' -- "$@")` || exit $?
+argv=`(getopt -o '' -l 'help,prefix:,exec-prefix:,libdir:,includedir:,pkgconfigdir:,without-digitizer,with-digitizer' -- "$@")` || exit $?
 eval "set -- ${argv[*]}"
 while [[ $1 != -- ]]; do
   case $1 in
@@ -39,6 +41,7 @@ while [[ $1 != -- ]]; do
     --bindir)            bindir="$2"       shift 2;;
     --libdir)            libdir="$2";      shift 2;;
     --includedir)        includedir="$2";  shift 2;;
+    --pkgconfigdir)      pkgconfigdir="$2";  shift 2;;
     --without-digitizer) digitizer=0;      shift;;
     --with-digitizer)    digitizer=1;      shift;;
   esac
@@ -58,6 +61,10 @@ fi
 
 if [[ -z "$includedir" ]]; then
   includedir="$prefix/include"
+fi
+
+if [[ -z "$pkgconfigdir" ]]; then
+  pkgconfigdir="$libdir/pkgconfig"
 fi
 
 if [[ -z $digitizer ]]; then
@@ -83,12 +90,26 @@ fi
 
 echo Creating config.mak
 cat > config.mak <<END
-prefix      := $prefix
-exec_prefix := $exec_prefix
-bindir      := $bindir
-libdir      := $libdir
-includedir  := $includedir
+prefix       := $prefix
+exec_prefix  := $exec_prefix
+bindir       := $bindir
+libdir       := $libdir
+includedir   := $includedir
+pkgconfigdir := $pkgconfigdir
 digitizer   := $digitizer
+END
+
+echo Creating caen++.pc
+cat > caen++.pc <<END
+libdir=$libdir
+includedir=$includedir
+
+Name: caen++
+Description: C++ bindings to CAEN libraries
+URL: https://github.com/jini-zh/caenpp
+Version: `< version`
+Libs: -L\${libdir} -lCAENComm -lCAENVME${digitizer:+ -lCAENDigitizer}
+Cflags: -I\${includedir}
 END
 
 exec >&-
