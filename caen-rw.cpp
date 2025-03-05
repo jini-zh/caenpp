@@ -194,10 +194,19 @@ static void connect(
     std::function<uint32_t (uint16_t)>& read,
     std::function<void (uint16_t, uint32_t)>& write
 ) {
-  if (connection.address
-      || connection.bridge == caen::Connection::Bridge::None
-      && connection.conet != caen::Connection::Conet::None)
-  {
+  if (connection.is_bridge()) {
+    auto bridge = std::make_shared<caen::Bridge>(connection);
+    read = [bridge](uint16_t address) -> uint32_t {
+      if (address > std::numeric_limits<uint8_t>().max())
+        fail("address is too big for 8 bits: ", address);
+      return bridge->readRegister(address);
+    };
+    write = [bridge](uint16_t address, uint32_t value) {
+      if (address > std::numeric_limits<uint8_t>().max())
+        fail("address is too big for 8 bits: ", address);
+      bridge->writeRegister(address, value);
+    };
+  } else {
     auto device = std::make_shared<caen::Device>(connection);
     if (wide) {
       read = [device](uint16_t address) -> uint32_t {
@@ -215,18 +224,6 @@ static void connect(
           fail("value is too big for 16 bits: ", value);
         device->write16(address, value);
       };
-    };
-  } else {
-    auto bridge = std::make_shared<caen::Bridge>(connection);
-    read = [bridge](uint16_t address) -> uint32_t {
-      if (address > std::numeric_limits<uint8_t>().max())
-        fail("address is too big to 8 bits: ", address);
-      return bridge->readRegister(address);
-    };
-    write = [bridge](uint16_t address, uint32_t value) {
-      if (address > std::numeric_limits<uint8_t>().max())
-        fail("address is too big to 8 bits: ", address);
-      bridge->writeRegister(address, value);
     };
   };
 };
