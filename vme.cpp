@@ -46,8 +46,10 @@ static CVBoardTypes vmeConnectionType(
           return local ? cvPCIE_A3818_V3718_LOCAL : cvPCIE_A3818_V3718;
         case ct::A4818:
           return local ? cvUSB_A4818_V3718_LOCAL : cvUSB_A4818_V3718;
+#if CAENVME_VERSION_NUMBER >= 40000
         case ct::A5818:
           return local ? cvPCIE_A5818_V3718_LOCAL : cvPCIE_A5818_V3718;
+#endif
       };
       break;
     case bt::V4718:
@@ -62,8 +64,10 @@ static CVBoardTypes vmeConnectionType(
           return local ? cvPCIE_A3818_V4718_LOCAL : cvPCIE_A3818_V4718;
         case ct::A4818:
           return local ? cvUSB_A4818_V4718_LOCAL : cvUSB_A4818_V4718;
+#if CAENVME_VERSION_NUMBER >= 40000
         case ct::A5818:
           return local ? cvPCIE_A5818_V4718_LOCAL : cvPCIE_A5818_V4718;
+#endif
       };
       break;
     case bt::A2719:
@@ -82,8 +86,10 @@ static CVBoardTypes vmeConnectionType(
           return cvA3818;
         case ct::A4818:
           return local ? cvUSB_A4818_LOCAL : cvUSB_A4818;
+#if CAENVME_VERSION_NUMBER >= 40000
         case ct::A5818:
           return cvA5818;
+#endif
       };
       break;
   };

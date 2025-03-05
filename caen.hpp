@@ -33,7 +33,9 @@ struct Connection {
     A2818,
     A3818,
     A4818,
+#if CAENVME_VERSION_NUMBER >= 40000
     A5818,
+#endif
     Invalid
   };
 
