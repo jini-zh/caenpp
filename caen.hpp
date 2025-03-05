@@ -55,6 +55,10 @@ struct Connection {
 
   const char* bridgeName() const { return bridgeName(bridge); };
   const char* conetName()  const { return conetName(conet); };
+
+  bool is_bridge() const {
+    return address == 0 && (bridge != Bridge::None || conet == Conet::None);
+  };
 };
 
 class InvalidConnection: public Error {
