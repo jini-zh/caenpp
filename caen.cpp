@@ -80,7 +80,8 @@ std::ostream& operator<<(std::ostream& stream, const Connection& connection) {
       if (!first) stream << ", ";
       first = false;
       stream << "USB device ";
-    };
+    } else
+      stream << ' ';
     stream << connection.link;
   };
 

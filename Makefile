@@ -7,7 +7,7 @@ pkgconfigdir := $(libdir)/pkgconfig
 
 -include config.mak
 
-bindir       := $(DESTDIR)$(libdir)
+bindir       := $(DESTDIR)$(bindir)
 libdir       := $(DESTDIR)$(libdir)
 includedir   := $(DESTDIR)$(includedir)
 pkgconfigdir := $(DESTDIR)$(pkgconfigdir)
