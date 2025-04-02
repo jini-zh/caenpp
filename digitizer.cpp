@@ -255,7 +255,7 @@ Digitizer::Digitizer(const Connection& connection) {
       dgtzConnectionType(connection),
       const_cast<void*>(arg),
       connection.node,
-      connection.address,
+      static_cast<uint32_t>(connection.address) << 16,
       &digitizer
   );
   try {
